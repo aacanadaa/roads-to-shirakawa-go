@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Roads to Shirakawa-Go — a 3D voxel journey along the mountain road from Takayama to Shirakawa-go. Procedural rural Japan, gassho-zukuri houses, and a fully editable voxel world."
+    />
+    <title>Roads to Shirakawa-Go | 3D Voxel Journey</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="hud" aria-hidden="false">
+      <div id="crosshair" aria-hidden="true">
+        <span class="ch-v"></span>
+        <span class="ch-h"></span>
+      </div>
+
+      <div id="stats" class="panel">
+        <div class="stat-row"><span class="stat-key">FPS</span><span id="stat-fps">--</span></div>
+        <div class="stat-row"><span class="stat-key">XYZ</span><span id="stat-pos">--</span></div>
+        <div class="stat-row"><span class="stat-key">TIME</span><span id="stat-time">--</span></div>
+        <div class="stat-row"><span class="stat-key">CYCLE</span><span id="stat-cycle">AUTO</span></div>
+      </div>
+
+      <div id="toolbar" class="panel">
+        <button id="btn-cycle" class="tool-btn" type="button" title="Toggle day/night cycle (N)">Cycle: Auto</button>
+        <button id="btn-sound" class="tool-btn" type="button" title="Toggle ambient audio (M)">Sound: On</button>
+        <button id="btn-help" class="tool-btn" type="button" title="Show controls (H)">Controls</button>
+      </div>
+
+      <div id="toast" class="toast" role="status"></div>
+
+      <div id="hotbar" class="panel" role="toolbar" aria-label="Block palette">
+        <div id="hotbar-slots"></div>
+        <div id="hotbar-label">Cedar Wood</div>
+      </div>
+
+      <div id="help" class="panel hidden">
+        <h2>Controls</h2>
+        <ul>
+          <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / Arrows — move</li>
+          <li><kbd>Mouse</kbd> — look around</li>
+          <li><kbd>Space</kbd> — jump / swim up</li>
+          <li><kbd>Shift</kbd> — sprint</li>
+          <li><kbd>Left click</kbd> — break block</li>
+          <li><kbd>Right click</kbd> — place block</li>
+          <li><kbd>1</kbd>–<kbd>8</kbd> / wheel — select block</li>
+          <li><kbd>N</kbd> — day / night cycle</li>
+          <li><kbd>M</kbd> — mute ambient audio</li>
+          <li><kbd>H</kbd> — toggle this panel</li>
+          <li><kbd>Esc</kbd> — release mouse</li>
+        </ul>
+      </div>
+
+      <div id="intro">
+        <div class="intro-card">
+          <p class="intro-kicker">Takayama &rarr; Shirakawa-go</p>
+          <h1>ROADS TO<br />SHIRAKAWA-GO</h1>
+          <p class="intro-sub">
+            A 3D voxel journey through the mountain villages of Gifu &mdash;
+            thatched gassho roofs, autumn maples, stone lanterns and a stream
+            that never stops singing.
+          </p>
+          <button id="btn-play" class="play-btn" type="button">Click to Explore</button>
+          <p class="intro-hint">WASD to move &middot; Mouse to look &middot; Click to build</p>
+        </div>
+      </div>
+
+      <div id="pause" class="hidden">
+        <div class="intro-card">
+          <h2>Paused</h2>
+          <p class="intro-sub">Click below to return to the valley.</p>
+          <button id="btn-resume" class="play-btn" type="button">Resume</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

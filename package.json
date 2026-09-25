@@ -1,0 +1,42 @@
+{
+  "name": "roads-to-shirakawa-go",
+  "version": "1.0.0",
+  "description": "A 3D voxel journey along the scenic mountain road from Takayama to Shirakawa-go — procedural rural Japan, gassho-zukuri villages, and a fully editable voxel world.",
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "author": "aacanadaa",
+  "homepage": "https://github.com/aacanadaa/roads-to-shirakawa-go#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aacanadaa/roads-to-shirakawa-go.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aacanadaa/roads-to-shirakawa-go/issues"
+  },
+  "keywords": [
+    "voxel",
+    "three.js",
+    "webgl",
+    "game",
+    "procedural-generation",
+    "japan",
+    "shirakawa-go",
+    "takayama",
+    "gassho-zukuri",
+    "vite"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}
