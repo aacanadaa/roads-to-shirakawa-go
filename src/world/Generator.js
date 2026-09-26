@@ -240,6 +240,8 @@ export function generateWorld(world) {
 
       const mapleGroves = noise2.fbm2(x * 0.018 + 90, z * 0.018 + 45, 2);
       const isMaple = mapleGroves > 0.02;
+      const birchBand = noise.fbm2(x * 0.03 + 210, z * 0.03 + 88, 2);
+      const isBirch = !isMaple && birchBand > 0.18;
 
       const groundY = h + 1;
       if (isMaple) {
@@ -264,17 +266,25 @@ export function generateWorld(world) {
           }
         }
       } else {
-        const trunkH = 4 + Math.floor(rand() * 3);
+        const trunkType = isBirch ? BLOCK.BIRCH : BLOCK.TRUNK;
+        const leafType = isBirch ? BLOCK.BIRCH_LEAF : BLOCK.PINE;
+        const trunkH = isBirch ? 5 + Math.floor(rand() * 2) : 4 + Math.floor(rand() * 3);
         for (let y = 0; y < trunkH; y += 1) {
-          world.data[world.index(x, groundY + y, z)] = BLOCK.TRUNK;
+          world.data[world.index(x, groundY + y, z)] = trunkType;
         }
         const canopyBase = groundY + trunkH - 2;
-        const layers = [
-          { dy: 0, r: 2.6 },
-          { dy: 1, r: 2.1 },
-          { dy: 2, r: 1.4 },
-          { dy: 3, r: 0.7 },
-        ];
+        const layers = isBirch
+          ? [
+              { dy: 0, r: 2.3 },
+              { dy: 1, r: 1.9 },
+              { dy: 2, r: 1.2 },
+            ]
+          : [
+              { dy: 0, r: 2.6 },
+              { dy: 1, r: 2.1 },
+              { dy: 2, r: 1.4 },
+              { dy: 3, r: 0.7 },
+            ];
         for (const layer of layers) {
           const r2 = layer.r * layer.r;
           for (let dx = -3; dx <= 3; dx += 1) {
@@ -285,17 +295,88 @@ export function generateWorld(world) {
               const bz = z + dz;
               if (bx < 0 || bx >= sizeX || bz < 0 || bz >= sizeZ || by >= height) continue;
               const idx = world.index(bx, by, bz);
-              if (world.data[idx] === BLOCK.AIR) world.data[idx] = BLOCK.PINE;
+              if (world.data[idx] === BLOCK.AIR) world.data[idx] = leafType;
             }
           }
         }
-        const tipY = canopyBase + 4;
-        if (tipY < height) world.data[world.index(x, tipY, z)] = BLOCK.PINE;
+        const tipY = canopyBase + (isBirch ? 3 : 4);
+        if (tipY < height) world.data[world.index(x, tipY, z)] = leafType;
+      }
+    }
+  }
+
+  // ---- 7b. bamboo groves and mossy boulders -----------------------------
+  for (let z = 4; z < sizeZ - 4; z += 1) {
+    const rX = roadX(z);
+    const vX = riverX(z);
+    for (let x = 4; x < sizeX - 4; x += 1) {
+      const dRoad = Math.abs(x - rX);
+      const dRiver = Math.abs(x - vX);
+      if (dRoad < 11 || dRiver < 10) continue;
+
+      const h = surfaceY[z * sizeX + x];
+      if (h <= 1 || h >= 33) continue;
+      const surface = world.data[world.index(x, h, z)];
+
+      const bambooPatch = noise2.fbm2(x * 0.055 + 55, z * 0.055 + 77, 2);
+      if (surface === BLOCK.GRASS && bambooPatch > 0.3 && rand() < 0.075) {
+        const stalks = 2 + Math.floor(rand() * 3);
+        for (let s = 0; s < stalks; s += 1) {
+          const bx = x + Math.round((rand() - 0.5) * 3);
+          const bz = z + Math.round((rand() - 0.5) * 3);
+          if (bx < 1 || bx >= sizeX - 1 || bz < 1 || bz >= sizeZ - 1) continue;
+          const bh = surfaceY[bz * sizeX + bx];
+          if (world.data[world.index(bx, bh, bz)] !== BLOCK.GRASS) continue;
+          const stalkH = 5 + Math.floor(rand() * 5);
+          for (let y = 1; y <= stalkH; y += 1) {
+            const by = bh + y;
+            if (by >= height) break;
+            world.data[world.index(bx, by, bz)] = BLOCK.BAMBOO;
+          }
+          const top = Math.min(bh + stalkH + 1, height - 1);
+          const leaves = [
+            [0, 0, 0],
+            [1, 0, -1],
+            [-1, 0, -1],
+            [0, 1, -1],
+            [0, -1, -1],
+          ];
+          for (const [ox, oy, oz] of leaves) {
+            const lx = bx + ox;
+            const ly = top + oy;
+            const lz = bz + oz;
+            if (lx < 0 || lx >= sizeX || lz < 0 || lz >= sizeZ) continue;
+            if (ly < 1 || ly >= height) continue;
+            if (world.data[world.index(lx, ly, lz)] === BLOCK.AIR) {
+              world.data[world.index(lx, ly, lz)] = BLOCK.BIRCH_LEAF;
+            }
+          }
+        }
+        continue;
+      }
+
+      if ((surface === BLOCK.GRASS || surface === BLOCK.GRAVEL) && rand() < 0.006) {
+        const blob = 1 + Math.floor(rand() * 2);
+        for (let dy = 0; dy <= blob; dy += 1) {
+          for (let dx = -1; dx <= 1; dx += 1) {
+            for (let dz = -1; dz <= 1; dz += 1) {
+              if (Math.abs(dx) + Math.abs(dz) + dy > blob + 1) continue;
+              const bx = x + dx;
+              const by = h + 1 + dy;
+              const bz = z + dz;
+              if (bx < 0 || bx >= sizeX || bz < 0 || bz >= sizeZ || by >= height) continue;
+              if (world.data[world.index(bx, by, bz)] === BLOCK.AIR) {
+                world.data[world.index(bx, by, bz)] = BLOCK.MOSSY_STONE;
+              }
+            }
+          }
+        }
       }
     }
   }
 
   // ---- 8. gassho-zukuri houses ------------------------------------------
+  const houseLights = [];
   for (const house of houses) {
     const { x: hx, z: hz, y: hy, w, d, side } = house;
     const x0 = hx - Math.floor(w / 2);
@@ -335,10 +416,22 @@ export function generateWorld(world) {
     }
 
     for (const wz of [z0 + 3, z1 - 3]) {
-      for (const wx of [x0 + 2, x1 - 2]) {
-        world.data[world.index(wx, hy + 3, wz)] = BLOCK.AIR;
+      for (const wy of [hy + 2, hy + 3]) {
+        if (world.data[world.index(x0, wy, wz)] === BLOCK.WOOD) {
+          world.data[world.index(x0, wy, wz)] = BLOCK.SHOJI;
+        }
+        if (world.data[world.index(x1, wy, wz)] === BLOCK.WOOD) {
+          world.data[world.index(x1, wy, wz)] = BLOCK.SHOJI;
+        }
       }
     }
+
+    const lampX = Math.floor((x0 + x1) / 2);
+    const lampZ = Math.floor((z0 + z1) / 2);
+    if (wallTop - 1 > hy + 1 && lampX > 0 && lampX < sizeX && lampZ > 0 && lampZ < sizeZ) {
+      world.data[world.index(lampX, wallTop - 1, lampZ)] = BLOCK.SHOJI;
+    }
+    houseLights.push({ x: lampX + 0.5, y: hy + 3.4, z: lampZ + 0.5 });
 
     const rx0 = x0 - 1;
     const rx1 = x1 + 1;
@@ -366,6 +459,25 @@ export function generateWorld(world) {
         if (world.data[world.index(x, y, z)] === BLOCK.AIR) {
           world.data[world.index(x, y, z)] = BLOCK.THATCH;
         }
+      }
+    }
+  }
+
+  // ---- 8b. cobblestone paths from farmhouses to the road ---------------
+  for (const house of houses) {
+    const targetX = roadX(house.z);
+    const startX = house.x + (house.side > 0 ? -Math.floor(house.w / 2) : Math.floor(house.w / 2));
+    const steps = Math.ceil(Math.abs(targetX - startX)) + 1;
+    for (let s = 0; s <= steps; s += 1) {
+      const t = s / steps;
+      const px = Math.round(startX + (targetX - startX) * t);
+      const pz = house.z + Math.round(Math.sin(t * Math.PI) * 1.5 * (house.side > 0 ? -1 : 1));
+      if (px < 0 || px >= sizeX || pz < 0 || pz >= sizeZ) continue;
+      const h = surfaceY[pz * sizeX + px];
+      if (h <= 1 || h >= height - 2) continue;
+      const id = world.data[world.index(px, h, pz)];
+      if (id === BLOCK.GRASS || id === BLOCK.GRAVEL) {
+        world.data[world.index(px, h, pz)] = BLOCK.COBBLE;
       }
     }
   }
@@ -399,6 +511,7 @@ export function generateWorld(world) {
     bridges,
     houses,
     lanterns,
+    houseLights,
     spawn: { x: spawnX + 0.5, y: spawnY, z: spawnZ + 0.5 },
   };
 }

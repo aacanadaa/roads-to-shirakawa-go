@@ -1,7 +1,7 @@
 :root {
   --ink: #0b1210;
-  --panel: rgba(12, 20, 18, 0.62);
-  --panel-border: rgba(233, 240, 245, 0.14);
+  --panel: rgba(12, 20, 18, 0.55);
+  --panel-border: rgba(233, 240, 245, 0.16);
   --text: #eef3f5;
   --muted: #b7c4c0;
   --accent: #c2552e;
@@ -47,10 +47,37 @@ body {
 .panel {
   background: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+  border-radius: 12px;
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- location banner ---------- */
+.location-banner {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translate(-50%, -12px);
+  padding: 10px 26px;
+  border-radius: 999px;
+  background: rgba(12, 20, 18, 0.55);
+  border: 1px solid var(--panel-border);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  white-space: nowrap;
+}
+
+.location-banner.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 /* ---------- crosshair ---------- */
@@ -128,15 +155,15 @@ body {
 .tool-btn {
   appearance: none;
   border: 1px solid var(--panel-border);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.07);
   color: var(--text);
   font-family: inherit;
   font-size: 11px;
   letter-spacing: 0.05em;
   padding: 7px 11px;
-  border-radius: 7px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
 }
 
 .tool-btn:hover {
@@ -173,31 +200,44 @@ body {
   position: relative;
   width: 52px;
   height: 52px;
-  border-radius: 9px;
+  border-radius: 11px;
   border: 2px solid rgba(233, 240, 245, 0.16);
   background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.18s ease,
+    background 0.18s ease, box-shadow 0.18s ease;
 }
 
 .slot:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.13);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.slot:active {
+  transform: translateY(-1px) scale(0.96);
 }
 
 .slot.selected {
   border-color: var(--accent-soft);
-  background: rgba(194, 85, 46, 0.22);
-  transform: translateY(-4px);
+  background: rgba(194, 85, 46, 0.24);
+  transform: translateY(-5px);
+  box-shadow: 0 14px 28px rgba(194, 85, 46, 0.32);
 }
 
 .slot .swatch {
   width: 30px;
   height: 30px;
-  border-radius: 6px;
+  border-radius: 7px;
   box-shadow: inset 0 -6px 10px rgba(0, 0, 0, 0.28), inset 0 4px 8px rgba(255, 255, 255, 0.18);
+  transition: transform 0.18s ease;
+}
+
+.slot:hover .swatch {
+  transform: scale(1.08);
 }
 
 .slot .slot-key {

@@ -15,6 +15,12 @@ export const BLOCK = Object.freeze({
   SAND: 13,
   TRUNK: 14,
   BEDROCK: 15,
+  BAMBOO: 16,
+  BIRCH: 17,
+  BIRCH_LEAF: 18,
+  MOSSY_STONE: 19,
+  COBBLE: 20,
+  SHOJI: 21,
 });
 
 export const BLOCK_DEFS = Object.freeze([
@@ -30,10 +36,16 @@ export const BLOCK_DEFS = Object.freeze([
   { id: 9, name: 'Autumn Maple', color: 0xc2552e, solid: true, liquid: false },
   { id: 10, name: 'Mountain Water', color: 0x3f86b5, solid: false, liquid: true },
   { id: 11, name: 'Snow Cap', color: 0xe9f0f5, solid: true, liquid: false },
-  { id: 12, name: 'Stone Lantern', color: 0xd8c9a0, solid: true, liquid: false },
+  { id: 12, name: 'Stone Lantern', color: 0xffd9a0, solid: true, liquid: false },
   { id: 13, name: 'River Sand', color: 0xcbb68c, solid: true, liquid: false },
   { id: 14, name: 'Cedar Trunk', color: 0x5d4326, solid: true, liquid: false },
   { id: 15, name: 'Bedrock', color: 0x4a4f54, solid: true, liquid: false },
+  { id: 16, name: 'Bamboo Stalk', color: 0x7fae5c, solid: true, liquid: false },
+  { id: 17, name: 'Birch Trunk', color: 0xd8d3c4, solid: true, liquid: false },
+  { id: 18, name: 'Birch Canopy', color: 0x7fae5c, solid: true, liquid: false },
+  { id: 19, name: 'Mossy Rock', color: 0x6f8566, solid: true, liquid: false },
+  { id: 20, name: 'Cobble Path', color: 0x8d8f88, solid: true, liquid: false },
+  { id: 21, name: 'Shoji Screen', color: 0xffe9c4, solid: true, liquid: false },
 ]);
 
 export const HOTBAR = Object.freeze([
@@ -47,8 +59,14 @@ export const HOTBAR = Object.freeze([
   BLOCK.WATER,
 ]);
 
+export const GLOW_IDS = Object.freeze([BLOCK.LANTERN, BLOCK.SHOJI]);
+
 export function blockDef(id) {
   return BLOCK_DEFS[id] ?? BLOCK_DEFS[0];
+}
+
+export function isGlowId(id) {
+  return id === BLOCK.LANTERN || id === BLOCK.SHOJI;
 }
 
 export function isSolidId(id) {

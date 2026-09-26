@@ -16,6 +16,9 @@ export class Player {
     this.onGround = false;
     this.inWater = false;
     this.headInWater = false;
+    this.wasInWater = false;
+    this.stepDistance = 0;
+    this.onStep = null;
     this.input = {
       forward: false,
       back: false,
@@ -213,7 +216,30 @@ export class Player {
       this.velocity.set(0, 0, 0);
     }
 
+    const movingSpeed = Math.hypot(this.velocity.x, this.velocity.z);
+    if (this.inWater && !this.wasInWater && this.onStep) {
+      this.onStep(BLOCK.WATER, Math.min(1.2, movingSpeed / 4 + 0.5));
+      this.stepDistance = 0;
+    } else if (this.onGround && movingSpeed > 0.6) {
+      this.stepDistance += movingSpeed * dt;
+      const stride = input.sprint ? 2.05 : 1.62;
+      if (this.stepDistance >= stride) {
+        this.stepDistance = 0;
+        if (this.onStep) this.onStep(this.surfaceId(), Math.min(1.25, movingSpeed / P.walkSpeed));
+      }
+    } else if (!this.onGround) {
+      this.stepDistance = Math.min(this.stepDistance, 1.1);
+    }
+    this.wasInWater = this.inWater;
+
     this.syncCamera();
+  }
+
+  surfaceId() {
+    const x = Math.floor(this.position.x);
+    const z = Math.floor(this.position.z);
+    const y = Math.floor(this.position.y - 0.05);
+    return this.world.getBlock(x, y, z);
   }
 
   getCameraDirection() {

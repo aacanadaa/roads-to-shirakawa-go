@@ -13,7 +13,7 @@
 > autumn maple groves and stone lanterns, cross the mountain stream, and reshape the
 > valley one block at a time.
 
-![Valley view along the road to Shirakawa-go](./docs/screenshot-valley.png)
+![Valley view along the road to Shirakawa-go](./docs/screenshot-valley.jpg)
 
 ---
 
@@ -22,6 +22,8 @@
 - **Fully editable voxel world** — break and place blocks in real time (left / right click)
   with an 8-slot palette: rice grass, cedar wood, thatched roof, mountain stone, pine
   foliage, autumn maple, road asphalt and mountain water.
+- **Cinematic renderer** — SSAO, ACES tone mapping, UnrealBloom, SMAA and a custom
+  film-grade pass over a shader sky, animated water and volumetric mountain mist.
 - **Procedural Takayama valley** — a meandering mountain road, a flowing stream with
   cascades, a wooden bridge, snow-capped ridgelines and a 256 × 256 × 64 voxel map.
 - **Gassho-zukuri architecture** — steep thatched-roof farmhouses generated block by
@@ -35,7 +37,35 @@
 
 | Gassho farmhouse | River crossing | Nightfall |
 | --- | --- | --- |
-| ![Gassho-zukuri house](./docs/screenshot-gassho.png) | ![Wooden bridge over the stream](./docs/screenshot-bridge.png) | ![Night over the valley](./docs/screenshot-night.png) |
+| ![Gassho-zukuri house](./docs/screenshot-gassho.jpg) | ![Wooden bridge over the stream](./docs/screenshot-bridge.jpg) | ![Night over the valley](./docs/screenshot-night.jpg) |
+
+![Golden hour over the Takayama valley](./docs/screenshot-golden.jpg)
+
+---
+
+## Rendering & Atmosphere
+
+v1.1 ships a full cinematic post-processing stack built on `three/examples/jsm`:
+
+| Stage | Pass | Purpose |
+| --- | --- | --- |
+| 1 | `RenderPass` | Linear HDR scene render (half-float targets) |
+| 2 | `SSAOPass` | Screen-space ambient occlusion in voxel crevices |
+| 3 | `UnrealBloomPass` | Glow on lanterns, shōji screens, sun and water glints |
+| 4 | `OutputPass` | ACES filmic tone mapping + sRGB encode |
+| 5 | `SMAAPass` | Subpixel anti-aliasing on block silhouettes |
+| 6 | `ColorGradePass` | Vignette, film grain, chromatic aberration, contrast |
+
+- **Triplanar world shading** — procedural wood grain, thatch striations, stone speckle and
+  bamboo segmentation blended by world normal, so nothing stretches on voxel sides.
+- **Animated water** — vertex-displaced ripples, scrolling normals, fresnel sky reflection,
+  sun sparkle and foam where the stream meets banks and bridge posts.
+- **Shader sky dome** — gradient sky with sun disc, atmospheric glow and night stars,
+  synced to a six-stage elevation-keyed time-of-day palette.
+- **Volumetric mountain mist** — `FogExp2` density breathes with the solar arc.
+- **Particles** — pollen motes in sunbeams, *hotaru* fireflies around lanterns at night,
+  and drifting autumn leaves.
+- **2048² directional shadows** with bias tuning and a player-following shadow camera.
 
 ---
 
@@ -74,6 +104,7 @@ Click the canvas to capture the mouse and start exploring.
 | `1`–`8` / Mouse wheel | Select block from the palette |
 | `N` | Cycle day / night mode (Auto → Day → Night) |
 | `M` | Mute / unmute ambient audio |
+| `G` | Cycle graphics quality (High → Medium → Low) |
 | `H` | Toggle the controls panel |
 | `Esc` | Release the mouse |
 
@@ -84,10 +115,11 @@ Click the canvas to capture the mouse and start exploring.
 | Layer | Choice | Notes |
 | --- | --- | --- |
 | Engine | **three.js** (r186) | WebGL2 renderer, `InstancedMesh` voxel batches |
+| Post-processing | **EffectComposer** | SSAO + UnrealBloom + ACES + SMAA + custom grade |
 | Bundler | **Vite** | ES modules, instant HMR, `vite build` production bundle |
 | Language | **JavaScript (ES2022)** | Zero build-time transpilation beyond Vite |
-| Styling | **CSS3** | Glass HUD overlay, no CSS framework |
-| Audio | **Web Audio API** | Procedural noise beds, filters and LFOs |
+| Styling | **CSS3** | Frosted-glass HUD overlay, no CSS framework |
+| Audio | **Web Audio API** | Procedural noise beds + `PositionalAudio` world emitters |
 | Physics | **Custom AABB** | Axis-separated voxel collision with auto step-up |
 
 ```text
@@ -96,10 +128,22 @@ roads-to-shirakawa-go/
 ├── vite.config.js          # bundler configuration
 └── src/
     ├── main.js             # entry point
-    ├── config.js           # tunable gameplay constants
+    ├── config.js           # tunable gameplay + graphics constants
     ├── utils.js            # math helpers (clamp, smoothstep, hash)
     ├── core/
-    │   └── Game.js         # renderer, scene, input, main loop
+    │   └── Game.js         # renderer, input, quality tiers, main loop
+    ├── graphics/
+    │   ├── Composer.js     # EffectComposer post-processing chain
+    │   ├── SkyDome.js      # gradient sky shader mesh
+    │   ├── VoxelMaterial.js# triplanar-injected Lambert blocks
+    │   ├── WaterMaterial.js# animated water ShaderMaterial
+    │   └── Particles.js    # motes, fireflies, falling leaves
+    ├── shaders/
+    │   ├── triplanar.js    # world-space procedural detail GLSL
+    │   ├── water.js        # ripple / foam / fresnel GLSL
+    │   ├── skyDome.js      # sky gradient + stars GLSL
+    │   ├── particles.js    # point-sprite motion GLSL
+    │   └── colorGrade.js   # vignette / grain / aberration GLSL
     ├── world/
     │   ├── blocks.js       # block registry + palette
     │   ├── noise.js        # seeded Perlin / fBm / ridged noise
@@ -112,10 +156,12 @@ roads-to-shirakawa-go/
     ├── env/
     │   └── Sky.js          # sun arc, fog, palette, lantern lights
     ├── audio/
-    │   └── AmbientAudio.js # procedural wind / stream / falls
+    │   ├── AmbientAudio.js # procedural wind / stream / falls
+    │   ├── SpatialAudio.js # positional river + lantern fire
+    │   └── Footsteps.js    # surface-aware step synthesis
     └── ui/
-        ├── HUD.js          # hotbar, stats, toast, help
-        └── hud.css         # overlay styling
+        ├── HUD.js          # hotbar, stats, banner, quality
+        └── hud.css         # frosted-glass overlay styling
 ```
 
 ### Voxel pipeline

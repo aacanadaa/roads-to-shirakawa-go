@@ -8,8 +8,45 @@ export const CONFIG = {
   },
   render: {
     maxPixelRatio: 1.5,
-    fogDay: { near: 55, far: 265 },
-    fogNight: { near: 34, far: 200 },
+  },
+  graphics: {
+    quality: 'high',
+    toneMappingExposure: 1.08,
+    shadows: {
+      enabled: true,
+      mapSize: 2048,
+      extent: 55,
+      bias: -0.00025,
+      normalBias: 0.065,
+    },
+    ssao: {
+      enabled: true,
+      kernelSize: 16,
+      kernelRadius: 9,
+      minDistance: 0.0022,
+      maxDistance: 0.075,
+    },
+    bloom: {
+      strength: 0.48,
+      radius: 0.72,
+      threshold: 0.68,
+    },
+    colorGrade: {
+      vignette: 0.28,
+      grain: 0.028,
+      chromatic: 0.0016,
+      saturation: 1.06,
+      contrast: 1.03,
+    },
+    particles: {
+      motes: 650,
+      fireflies: 150,
+      leaves: 300,
+      volume: 72,
+    },
+    water: {
+      waveHeight: 0.07,
+    },
   },
   player: {
     width: 0.6,
@@ -32,8 +69,34 @@ export const CONFIG = {
   },
   audio: {
     masterVolume: 0.55,
+    footsteps: true,
+    spatial: true,
   },
   interaction: {
     repeatDelay: 0.22,
+  },
+};
+
+export const QUALITY_PRESETS = {
+  high: {
+    shadows: { enabled: true, mapSize: 2048 },
+    ssao: { enabled: true },
+    bloom: { strength: 0.48 },
+    particles: { motes: 650, fireflies: 150, leaves: 300 },
+    maxPixelRatio: 1.5,
+  },
+  medium: {
+    shadows: { enabled: true, mapSize: 1024 },
+    ssao: { enabled: false },
+    bloom: { strength: 0.42 },
+    particles: { motes: 320, fireflies: 90, leaves: 160 },
+    maxPixelRatio: 1.25,
+  },
+  low: {
+    shadows: { enabled: false, mapSize: 512 },
+    ssao: { enabled: false },
+    bloom: { strength: 0.32 },
+    particles: { motes: 120, fireflies: 40, leaves: 70 },
+    maxPixelRatio: 1,
   },
 };

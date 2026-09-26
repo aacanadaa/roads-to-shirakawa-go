@@ -5,6 +5,88 @@ All notable changes to **Roads to Shirakawa-Go** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-09-25
+
+High Fidelity Graphic Overhaul — cinematic rendering, dynamic shaders and a living atmosphere.
+
+### Added
+
+#### Post-processing pipeline (`src/graphics/Composer.js`, `src/shaders/colorGrade.js`)
+- `EffectComposer` HDR pipeline (half-float linear render targets) with:
+  - `SSAOPass` — screen-space ambient occlusion for contact shadows and voxel-crevice depth
+    (tunable kernel radius / distance falloff, quality-tiered).
+  - `UnrealBloomPass` — soft glow on paper lanterns, shoji screens, sun disc and water speculars.
+  - `OutputPass` — ACES filmic tone mapping + sRGB conversion extracted from renderer settings.
+  - `SMAAPass` — subpixel morphological anti-aliasing for clean voxel silhouettes.
+  - Custom `ColorGradeShader` — cinematic vignette, animated film grain and radial chromatic
+    aberration with saturation/contrast finishing.
+
+#### Advanced lighting & atmosphere
+- `THREE.FogExp2` exponential mountain mist with density and colour keyed to the solar arc
+  (densest at golden dawn/dusk, thinnest at noon, misty blue at night).
+- High-resolution 2048² directional shadow mapping (`PCFShadowMap` with tuned `bias` /
+  `normalBias` to eliminate acne on block faces; shadow camera follows the player on a
+  snapped grid to prevent shimmering).
+- Extended dynamic time-of-day: six elevation-keyed palette stages (night → misty twilight →
+  golden sunrise → morning → noon → high noon) driving sun direction/intensity, hemisphere
+  and ambient fill, sky dome, fog and water colours, with eased Auto/Day/Night switching.
+
+#### High-fidelity shaders (`src/shaders/`)
+- **Triplanar detail shading** — `VoxelMaterial` injects world-space triplanar procedural
+  detail (wood grain, thatch striations, stone speckle, moss, bamboo segments) into the
+  Lambert pipeline via `onBeforeCompile`, preserving shadows and fog with zero stretching.
+- **Animated water shader** (`WaterMaterial`) — vertex-displaced surface ripples, scrolling
+  procedural normals, fresnel sky reflection, sun glints/sparkle, and bank/bridge-post foam
+  driven by per-instance contact attributes.
+- **Sky dome shader** — gradient zenith/horizon dome with sun disc, atmospheric glow and
+  hash-twinkling stars at night.
+
+#### Particle systems (`src/graphics/Particles.js`)
+- Pollen and dust motes drifting in sunbeams (camera-following additive point field).
+- Fireflies (*hotaru*) hovering around stone lanterns and farmhouses, pulsing only after dusk.
+- Falling autumn leaves with per-particle colour, rotation and wind sway.
+
+#### Environment polish
+- Bamboo groves with segmented stalks and leaf tufts.
+- Birch trees with pale bark and light canopies alongside cedar pines and autumn maples.
+- Mossy boulders scattered through the forest floor.
+- Cobblestone paths connecting every gassho farmhouse to the mountain road.
+- Farmhouse upgrades: glowing *shōji* paper-screen windows, hanging interior lamps and warm
+  point-light interior glow after dark.
+
+#### Procedural & spatial audio (`src/audio/`)
+- `THREE.PositionalAudio` emitters: rushing stream noise along the riverbed and crackling
+  fires at roadside stone lanterns, with distance rolloff and filters.
+- Surface-aware footstep synthesis — distinct procedural steps on grass, gravel, stone,
+  cedar, asphalt, snow and water, driven by player movement and terrain contact.
+
+#### Interface
+- Refined frosted-glass HUD with saturated blur panels.
+- Location banner announcing the region of the valley as you travel (with riverside tag).
+- Hotbar hover lift/scale animations and improved selection feedback.
+- Graphics quality tier button (`G`) cycling High → Medium → Low (SSAO, shadows, particle
+  counts and pixel ratio scale per tier).
+
+### Engine specifications
+
+| Spec | Value |
+| --- | --- |
+| Post chain | Render → SSAO → UnrealBloom → Output(ACES) → SMAA → ColorGrade |
+| Shadows | 2048² PCF, player-following ortho camera, bias-tuned |
+| Atmosphere | FogExp2 + shader sky dome + 3 particle fields |
+| Water | Custom ShaderMaterial (displacement, foam, fresnel, glints) |
+| Tone mapping | ACES Filmic, exposure 1.08 |
+| Runtime dependencies | `three` only |
+
+### Installation
+
+```bash
+npm install
+npm run dev      # develop on http://localhost:5173
+npm run build    # production bundle in dist/
+npm run preview  # serve the production bundle
+```
+
 ## [1.0.0] — 2026-09-24
 
 Initial playable release — the road from Takayama to Shirakawa-go is open.
@@ -73,4 +155,5 @@ npm run build    # production bundle in dist/
 npm run preview  # serve the production bundle
 ```
 
+[1.1.0]: https://github.com/aacanadaa/roads-to-shirakawa-go/releases/tag/v1.1.0
 [1.0.0]: https://github.com/aacanadaa/roads-to-shirakawa-go/releases/tag/v1.0.0

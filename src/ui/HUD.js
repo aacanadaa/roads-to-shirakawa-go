@@ -13,17 +13,29 @@ export class HUD {
     this.toolbarHelp = document.getElementById('btn-help');
     this.hotbarSlots = document.getElementById('hotbar-slots');
     this.hotbarLabel = document.getElementById('hotbar-label');
+    this.locationBanner = document.getElementById('location');
     this.toast = document.getElementById('toast');
     this.help = document.getElementById('help');
     this.intro = document.getElementById('intro');
     this.pause = document.getElementById('pause');
 
     this.toastTimer = 0;
+    this.locationTimer = 0;
+    this.currentLocation = '';
     this.fpsAccumulator = 0;
     this.fpsFrames = 0;
     this.fpsValue = 0;
 
     this.buildHotbar();
+  }
+
+  setLocation(name) {
+    if (name === this.currentLocation) return;
+    this.currentLocation = name;
+    if (!this.locationBanner) return;
+    this.locationBanner.textContent = name;
+    this.locationBanner.classList.add('visible');
+    this.locationTimer = 3.4;
   }
 
   buildHotbar() {
@@ -70,6 +82,11 @@ export class HUD {
     this.toolbarSound.classList.toggle('toggled-off', muted);
   }
 
+  setQualityLabel(name) {
+    const btn = document.getElementById('btn-quality');
+    if (btn) btn.textContent = `Quality: ${name[0].toUpperCase()}${name.slice(1)}`;
+  }
+
   toggleHelp(force) {
     const show = typeof force === 'boolean' ? force : this.help.classList.contains('hidden');
     this.help.classList.toggle('hidden', !show);
@@ -99,6 +116,13 @@ export class HUD {
     if (this.toastTimer > 0) {
       this.toastTimer -= dt;
       if (this.toastTimer <= 0) this.toast.classList.remove('visible');
+    }
+
+    if (this.locationTimer > 0) {
+      this.locationTimer -= dt;
+      if (this.locationTimer <= 0 && this.locationBanner) {
+        this.locationBanner.classList.remove('visible');
+      }
     }
   }
 
