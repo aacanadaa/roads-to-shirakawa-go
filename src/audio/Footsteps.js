@@ -1,3 +1,4 @@
+import { BLOCK } from '../world/blocks.js';
 import { clamp } from '../utils.js';
 
 const SURFACES = {
@@ -9,6 +10,30 @@ const SURFACES = {
   snow: { type: 'highpass', freq: 2400, q: 0.5, gain: 0.13, decay: 0.14, rate: 1.25 },
   water: { type: 'bandpass', freq: 950, q: 0.8, gain: 0.26, decay: 0.22, rate: 1.2 },
   dirt: { type: 'lowpass', freq: 520, q: 0.8, gain: 0.16, decay: 0.1, rate: 0.95 },
+};
+
+const BLOCK_SURFACE = {
+  [BLOCK.GRASS]: 'grass',
+  [BLOCK.DIRT]: 'dirt',
+  [BLOCK.STONE]: 'stone',
+  [BLOCK.GRAVEL]: 'gravel',
+  [BLOCK.ROAD]: 'road',
+  [BLOCK.WOOD]: 'wood',
+  [BLOCK.THATCH]: 'wood',
+  [BLOCK.PINE]: 'grass',
+  [BLOCK.MAPLE]: 'grass',
+  [BLOCK.WATER]: 'water',
+  [BLOCK.SNOW]: 'snow',
+  [BLOCK.LANTERN]: 'stone',
+  [BLOCK.SAND]: 'gravel',
+  [BLOCK.TRUNK]: 'wood',
+  [BLOCK.BEDROCK]: 'stone',
+  [BLOCK.BAMBOO]: 'grass',
+  [BLOCK.BIRCH]: 'wood',
+  [BLOCK.BIRCH_LEAF]: 'grass',
+  [BLOCK.MOSSY_STONE]: 'stone',
+  [BLOCK.COBBLE]: 'gravel',
+  [BLOCK.SHOJI]: 'wood',
 };
 
 export class Footsteps {
@@ -42,6 +67,10 @@ export class Footsteps {
       data[i] = Math.random() * 2 - 1;
     }
     return buffer;
+  }
+
+  surfaceForBlock(blockId) {
+    return BLOCK_SURFACE[blockId] ?? 'dirt';
   }
 
   play(surfaceName, intensity = 1) {

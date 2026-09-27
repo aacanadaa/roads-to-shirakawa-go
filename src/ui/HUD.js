@@ -1,4 +1,4 @@
-import { PROP_PALETTE } from '../scenery/Props.js';
+import { HOTBAR, blockDef } from '../world/blocks.js';
 
 export class HUD {
   constructor() {
@@ -40,14 +40,15 @@ export class HUD {
 
   buildHotbar() {
     this.hotbarSlots.innerHTML = '';
-    PROP_PALETTE.forEach((entry, index) => {
+    HOTBAR.forEach((id, index) => {
+      const def = blockDef(id);
       const slot = document.createElement('button');
       slot.type = 'button';
       slot.className = 'slot';
       slot.dataset.index = String(index);
-      slot.title = `${index + 1}: ${entry.name}`;
+      slot.title = `${index + 1}: ${def.name}`;
       slot.innerHTML = `
-        <span class="swatch" style="background:#${entry.color.toString(16).padStart(6, '0')}"></span>
+        <span class="swatch" style="background:#${def.color.toString(16).padStart(6, '0')}"></span>
         <span class="slot-key">${index + 1}</span>
       `;
       this.hotbarSlots.appendChild(slot);

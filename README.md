@@ -6,10 +6,10 @@
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![WebGL](https://img.shields.io/badge/WebGL-2-990000?logo=webgl&logoColor=white)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
-![Release](https://img.shields.io/badge/release-v1.2.0-orange)
+![Release](https://img.shields.io/badge/release-v1.3.0-orange)
 
-> A high-fidelity 3D journey along the scenic mountain road from **Takayama to Shirakawa-go** —
-> smooth mountain terrain, handcrafted gassho-zukuri farmhouses, wind-swept forests and a
+> A high-fidelity **voxel** journey along the scenic mountain road from **Takayama to Shirakawa-go** —
+> hand-built blocky gassho-zukuri farmhouses, wind-swept voxel forests and a
 > shader-driven atmosphere in the spirit of the great Minecraft shader packs.
 
 ![Valley view along the road to Shirakawa-go](./docs/screenshot-valley.jpg)
@@ -18,21 +18,21 @@
 
 ## Highlights
 
-- **Real-world scenery, not blocks** — a smooth 100k-vertex heightfield valley with
-  grass/rock/snow splat shading, extruded gassho farmhouses with curved thatch roofs,
-  700+ merged-geometry trees (cedar pine, autumn maple, birch), bamboo groves,
-  mossy boulders, plank bridges and roadside stone lanterns (*toro*).
-- **Shader-pack atmosphere** — volumetric god rays and lens flare from the sun, UnrealBloom
-  on lanterns and water glints, ACES tone mapping, SMAA, SSAO contact shadows, filmic
-  colour grade and drifting mountain mist.
-- **Wind and water** — foliage and grass sway in a gusting wind field; the river is a
-  fully animated shader ribbon with waves, fresnel sky reflection, sun sparkle and
-  foam where it meets the banks.
+- **True voxel world, highly detailed** — a 288 × 288 × 80 block valley rendered with
+  merged-face chunk meshes, per-vertex ambient occlusion, directional face shading and
+  triplanar micro-texture per block: terraced rice paddies, flower-drift meadows, grass
+  tufts, reeds and lily pads, moss carpets, bamboo groves, birch/maple/pine forests,
+  gassho farmhouses with glowing shoji, plank bridges, cobble paths and stone lanterns.
+- **Shader-pack atmosphere (SEUS/BSL spirit, voxel-native)** — volumetric god rays and
+  lens flare from the sun, UnrealBloom on lanterns and water glints, ACES tone mapping,
+  SMAA, SSAO plus baked voxel AO, filmic colour grade and drifting mountain mist.
+- **Wind and water** — foliage, crops and grass tufts sway in a gusting wind field; voxel
+  water carries waves, fresnel sky reflection, sun sparkle and foam where it meets banks.
 - **Living day / night cycle** — a four-minute solar arc drives sun direction, cloud-lit
   sky dome, fog colour and lantern glow, from golden sunset to misty blue twilight
   (`N` toggles Auto / Day / Night).
-- **Explore and build** — walk, sprint, jump and swim the valley; carve the terrain and
-  place stone, timber, thatch, moss, sand and snow with the build palette.
+- **Explore and build** — walk, sprint, jump and swim the valley; break and place blocks
+  (grass, timber, thatch, stone, pine, maple, road, water) with the voxel build tool.
 - **Procedural audio** — wind and mountain-stream beds, positional river and crackling
   lantern fires, plus surface-aware footsteps on grass, gravel, stone and snow.
 

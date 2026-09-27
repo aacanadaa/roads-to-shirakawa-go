@@ -1,15 +1,15 @@
 import * as THREE from 'three';
 import { CONFIG } from '../config.js';
 import { clamp } from '../utils.js';
+import { BLOCK, isSolidId, isLiquidId } from '../world/blocks.js';
 
 const P = CONFIG.player;
 
 export class Player {
-  constructor(camera, terrain, props) {
+  constructor(camera, world) {
     this.camera = camera;
-    this.terrain = terrain;
-    this.props = props;
-    this.position = new THREE.Vector3(10, 30, 10);
+    this.world = world;
+    this.position = new THREE.Vector3(8, 40, 8);
     this.velocity = new THREE.Vector3();
     this.yaw = 0;
     this.pitch = -0.05;
@@ -19,7 +19,6 @@ export class Player {
     this.wasInWater = false;
     this.stepDistance = 0;
     this.onStep = null;
-    this._euler = new THREE.Euler(0, 0, 0, 'YXZ');
     this.input = {
       forward: false,
       back: false,
@@ -28,6 +27,7 @@ export class Player {
       jump: false,
       sprint: false,
     };
+    this._euler = new THREE.Euler(0, 0, 0, 'YXZ');
   }
 
   spawn(x, y, z, yaw = Math.PI) {
@@ -55,26 +55,91 @@ export class Player {
     );
   }
 
-  groundHeight() {
-    const terrainY = this.terrain.sampleHeight(this.position.x, this.position.z);
-    const propTop = this.props.topAt(this.position.x, this.position.z, this.position.y);
-    return Math.max(terrainY, propTop);
+  blockAtFeet() {
+    const x = Math.floor(this.position.x);
+    const z = Math.floor(this.position.z);
+    return this.world.getBlock(x, Math.floor(this.position.y + 0.1), z);
   }
 
-  intersectsPlayer(x, y, z, half = 0.58) {
-    const dx = Math.abs(x - this.position.x);
-    const dz = Math.abs(z - this.position.z);
-    const dy = Math.abs(y - (this.position.y + P.height * 0.5));
-    return dx < half + P.width * 0.5 && dz < half + P.width * 0.5 && dy < half + P.height * 0.5;
+  intersectsSolid(px, py, pz) {
+    const half = P.width / 2;
+    const minX = px - half;
+    const maxX = px + half;
+    const minY = py;
+    const maxY = py + P.height;
+    const minZ = pz - half;
+    const maxZ = pz + half;
+
+    for (let x = Math.floor(minX); x <= Math.floor(maxX); x += 1) {
+      for (let y = Math.floor(minY); y <= Math.floor(maxY); y += 1) {
+        for (let z = Math.floor(minZ); z <= Math.floor(maxZ); z += 1) {
+          if (!this.world.isSolidAt(x, y, z)) continue;
+          const overlap =
+            minX < x + 1 && maxX > x && minY < y + 1 && maxY > y && minZ < z + 1 && maxZ > z;
+          if (overlap) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  intersectsBlock(bx, by, bz) {
+    const half = P.width / 2;
+    const minX = this.position.x - half;
+    const maxX = this.position.x + half;
+    const minY = this.position.y;
+    const maxY = this.position.y + P.height;
+    const minZ = this.position.z - half;
+    const maxZ = this.position.z + half;
+    return (
+      minX < bx + 1 && maxX > bx && minY < by + 1 && maxY > by && minZ < bz + 1 && maxZ > bz
+    );
+  }
+
+  moveAxis(axis, amount) {
+    if (amount === 0) return;
+    const prev = this.position[axis];
+    this.position[axis] += amount;
+
+    if (!this.intersectsSolid(this.position.x, this.position.y, this.position.z)) return;
+
+    if (axis !== 'y' && this.onGround) {
+      const prevY = this.position.y;
+      this.position.y = prevY + P.stepHeight;
+      if (!this.intersectsSolid(this.position.x, this.position.y, this.position.z)) {
+        return;
+      }
+      this.position.y = prevY;
+    }
+
+    this.position[axis] = prev;
+    if (axis === 'y') {
+      if (amount < 0) this.onGround = true;
+      this.velocity.y = 0;
+    } else {
+      this.velocity[axis] = 0;
+    }
   }
 
   update(dt) {
     dt = Math.min(dt, 0.05);
 
-    const waterY = this.terrain.waterHeightAt(this.position.x, this.position.z);
-    const groundY = this.terrain.sampleHeight(this.position.x, this.position.z);
-    this.inWater = waterY > -900 && this.position.y + 0.4 < waterY && groundY < waterY;
-    this.headInWater = waterY > -900 && this.position.y + P.eyeHeight < waterY;
+    const footBlock = this.world.getBlock(
+      Math.floor(this.position.x),
+      Math.floor(this.position.y + 0.2),
+      Math.floor(this.position.z)
+    );
+    const headBlock = this.world.getBlock(
+      Math.floor(this.position.x),
+      Math.floor(this.position.y + P.eyeHeight),
+      Math.floor(this.position.z)
+    );
+    this.inWater = isLiquidId(footBlock) || isLiquidId(this.world.getBlock(
+      Math.floor(this.position.x),
+      Math.floor(this.position.y + 0.9),
+      Math.floor(this.position.z)
+    ));
+    this.headInWater = isLiquidId(headBlock);
 
     const input = this.input;
     const sin = Math.sin(this.yaw);
@@ -126,70 +191,62 @@ export class Player {
     }
 
     if (this.inWater) {
-      this.velocity.y += P.gravity * 0.16 * dt;
-      this.velocity.y *= Math.exp(-2.6 * dt);
+      this.velocity.y += P.gravity * 0.18 * dt;
+      this.velocity.y *= Math.exp(-2.4 * dt);
       if (input.jump) this.velocity.y = P.swimUpVelocity;
-      this.velocity.y = clamp(this.velocity.y, -3.5, P.swimUpVelocity);
+      this.velocity.y = clamp(this.velocity.y, -4, P.swimUpVelocity);
     } else {
       this.velocity.y -= P.gravity * dt;
       if (input.jump && this.onGround) {
         this.velocity.y = P.jumpVelocity;
         this.onGround = false;
       }
-      this.velocity.y = Math.max(this.velocity.y, -48);
+      this.velocity.y = Math.max(this.velocity.y, -42);
     }
 
-    this.position.x += this.velocity.x * dt;
-    this.position.z += this.velocity.z * dt;
-    this.position.y += this.velocity.y * dt;
+    this.onGround = false;
+    this.moveAxis('y', this.velocity.y * dt);
+    this.moveAxis('x', this.velocity.x * dt);
+    this.moveAxis('z', this.velocity.z * dt);
 
-    this.position.x = clamp(this.position.x, 2, this.terrain.sizeX - 2);
-    this.position.z = clamp(this.position.z, 2, this.terrain.sizeZ - 2);
-
-    const ground = this.groundHeight();
-    if (this.position.y <= ground + 0.02 && this.velocity.y <= 0) {
-      this.position.y = ground;
-      this.velocity.y = 0;
-      this.onGround = true;
-    } else {
-      this.onGround = this.position.y - ground < 0.12 && this.velocity.y <= 0.1;
-    }
-
-    const blocker = this.props.blockingAt(this.position.x, this.position.z, this.position.y, P.height);
-    if (blocker) {
-      const half = blocker.userData.prop.half;
-      const dx = this.position.x - blocker.position.x;
-      const dz = this.position.z - blocker.position.z;
-      const push = half + P.width * 0.5 + 0.02;
-      if (Math.abs(dx) > Math.abs(dz)) {
-        this.position.x = blocker.position.x + Math.sign(dx || 1) * push;
-        this.velocity.x = 0;
-      } else {
-        this.position.z = blocker.position.z + Math.sign(dz || 1) * push;
-        this.velocity.z = 0;
-      }
+    this.position.x = clamp(this.position.x, 1.5, this.world.sizeX - 1.5);
+    this.position.z = clamp(this.position.z, 1.5, this.world.sizeZ - 1.5);
+    if (this.position.y < -20) {
+      this.position.y = this.world.height - 10;
+      this.velocity.set(0, 0, 0);
     }
 
     const movingSpeed = Math.hypot(this.velocity.x, this.velocity.z);
     if (this.inWater && !this.wasInWater && this.onStep) {
-      this.onStep('water', Math.min(1.2, movingSpeed / 4 + 0.5));
+      this.onStep(BLOCK.WATER, Math.min(1.2, movingSpeed / 4 + 0.5));
       this.stepDistance = 0;
-    } else if (this.onGround && movingSpeed > 0.9) {
+    } else if (this.onGround && movingSpeed > 0.6) {
       this.stepDistance += movingSpeed * dt;
-      const stride = input.sprint ? 2.15 : 1.72;
+      const stride = input.sprint ? 2.05 : 1.62;
       if (this.stepDistance >= stride) {
         this.stepDistance = 0;
-        if (this.onStep) {
-          this.onStep(this.surfaceName(), Math.min(1.25, movingSpeed / P.walkSpeed));
-        }
+        if (this.onStep) this.onStep(this.surfaceId(), Math.min(1.25, movingSpeed / P.walkSpeed));
       }
+    } else if (!this.onGround) {
+      this.stepDistance = Math.min(this.stepDistance, 1.1);
     }
     this.wasInWater = this.inWater;
 
     this.syncCamera();
   }
 
-  surfaceName() {
-    return this.terrain.surfaceAt(this.position.x, this.position.z);
+  surfaceId() {
+    const x = Math.floor(this.position.x);
+    const z = Math.floor(this.position.z);
+    const y = Math.floor(this.position.y - 0.05);
+    return this.world.getBlock(x, y, z);
+  }
+
+  getCameraDirection() {
+    return this.camera.getWorldDirection(new THREE.Vector3());
+  }
+
+  isSolidTarget(x, y, z) {
+    return isSolidId(this.world.getBlock(x, y, z));
   }
 }

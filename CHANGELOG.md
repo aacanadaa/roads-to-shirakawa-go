@@ -5,6 +5,25 @@ All notable changes to **Roads to Shirakawa-Go** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-09-27
+
+Voxel Revival + Shader-Pack Detail — back to blocks, more beautiful than ever.
+
+### Changed
+- Reverted the smooth-terrain overhaul (1.2.0); the world is fully voxel again.
+- New merged-face chunk mesher replaces per-block instancing: only exposed faces are
+  emitted, with classic per-vertex ambient occlusion, directional face shading,
+  waterline lowering and delicate bottom-anchored detail sprites.
+- World detail pass: flower drifts (red spider lily, chrysanthemum, white clover),
+  grass tufts, moss carpets, terraced rice paddies with stone-brick retaining walls,
+  river reeds, lily pads, plank bridge decks and cedar-plank / stone-brick blocks.
+- Voxel wind shader: pines, maples, bamboo, crops and tufts sway in a gusting field
+  driven by the day cycle; snow glints, lanterns flicker gently for bloom pickup.
+- Kept the 1.2.0 shader-pack pipeline (god rays + lens flare, bloom, SSAO, SMAA,
+  filmic grade) and retuned it for voxels: PCF-soft shadows, richer saturation,
+  voxel-aware water with sun glint and bank foam.
+- Fixed block break/place never re-meshing (dirty chunks now rebuild every frame).
+
 ## [1.2.0] — 2026-09-26
 
 Real-World Overhaul — the voxel valley becomes a high-fidelity landscape with

@@ -1,34 +1,29 @@
 import * as THREE from 'three';
 import { CONFIG, QUALITY_PRESETS } from '../config.js';
-import { generateTerrain } from '../world/terrainGen.js';
-import { Terrain } from '../world/Terrain.js';
-import { Forest } from '../scenery/Trees.js';
-import { Village } from '../scenery/Houses.js';
-import { Boulders } from '../scenery/Rocks.js';
-import { GrassField } from '../scenery/Grass.js';
-import { LanternRow } from '../scenery/Lanterns.js';
-import { Bridges } from '../scenery/Bridge.js';
-import { RoadRibbon } from '../scenery/Road.js';
-import { River } from '../scenery/Water.js';
-import { Props, PROP_PALETTE } from '../scenery/Props.js';
+import { World } from '../world/World.js';
+import { generateWorld } from '../world/Generator.js';
+import { sharedMaterials, Chunk } from '../world/Chunk.js';
+import { BLOCK } from '../world/blocks.js';
+import { voxelUniforms } from '../graphics/VoxelMaterial.js';
 import { Player } from '../player/Player.js';
-import { BuildTool } from '../player/BuildTool.js';
+import { BlockInteraction } from '../player/BlockInteraction.js';
 import { Sky } from '../env/Sky.js';
-import { SkyDome } from '../graphics/SkyDome.js';
-import { ParticleField } from '../graphics/Particles.js';
-import { PostPipeline } from '../graphics/Composer.js';
-import { windUniforms } from '../shaders/wind.js';
 import { AmbientAudio } from '../audio/AmbientAudio.js';
 import { SpatialAudio } from '../audio/SpatialAudio.js';
 import { Footsteps } from '../audio/Footsteps.js';
+import { SkyDome } from '../graphics/SkyDome.js';
+import { ParticleField } from '../graphics/Particles.js';
+import { PostPipeline } from '../graphics/Composer.js';
 import { HUD } from '../ui/HUD.js';
 import { clamp } from '../utils.js';
 
+void Chunk;
+
 const LOCATIONS = [
-  { z: 70, name: 'Hida Takayama · Old Post Road' },
-  { z: 140, name: 'Ainokura Woodland Crossing' },
-  { z: 210, name: 'Shokawa Stream Valley' },
-  { z: 270, name: 'Miyagawa Cedar Grove' },
+  { z: 55, name: 'Hida Takayama · Old Post Road' },
+  { z: 110, name: 'Ainokura Woodland Crossing' },
+  { z: 165, name: 'Shokawa Stream Valley' },
+  { z: 215, name: 'Miyagawa Cedar Grove' },
   { z: 999, name: 'Shirakawa-go Approach' },
 ];
 
@@ -51,40 +46,22 @@ export class Game {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = CONFIG.graphics.toneMappingExposure;
     this.renderer.shadowMap.enabled = CONFIG.graphics.shadows.enabled;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(this.renderer.domElement);
 
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(74, window.innerWidth / window.innerHeight, 0.1, 900);
 
-    this.terrainData = generateTerrain();
-    this.terrain = new Terrain(this.scene, this.terrainData);
+    // Voxel world: merged-face chunks with baked AO + shader-pack materials.
+    this.world = new World(this.scene, CONFIG.world);
+    this.meta = generateWorld(this.world);
+    this.world.meta = this.meta;
+    this.world.buildAll();
 
-    this.forest = new Forest(this.scene, this.terrainData.trees, this.terrainData.bamboos);
-    this.village = new Village(this.scene, this.terrainData.houses);
-    this.boulders = new Boulders(
-      this.scene,
-      this.terrainData.rocks.map((r) => ({
-        ...r,
-        y: this.terrain.sampleHeight(r.x, r.z) + r.scale * 0.35,
-      }))
-    );
-    this.grass = new GrassField(this.scene, this.terrain, CONFIG.graphics.grass);
-    this.lanterns = new LanternRow(this.scene, this.terrainData.lanterns, this.terrain);
-    this.bridges = new Bridges(this.scene, this.terrainData.bridges, this.terrain);
-    this.road = new RoadRibbon(this.scene, this.terrain);
-    this.river = new River(this.scene, this.terrain);
-    this.props = new Props(this.scene, this.terrain);
+    this.player = new Player(this.camera, this.world);
+    this.player.spawn(this.meta.spawn.x, this.meta.spawn.y, this.meta.spawn.z, Math.PI * 0.92);
 
-    this.player = new Player(this.camera, this.terrain, this.props);
-    this.player.spawn(
-      this.terrainData.spawn.x,
-      this.terrainData.spawn.y,
-      this.terrainData.spawn.z,
-      Math.PI * 0.92
-    );
-    this.buildTool = new BuildTool(this.scene, this.camera, this.terrain, this.props, this.player);
-
+    this.interaction = new BlockInteraction(this.world, this.player, this.scene);
     this.sky = new Sky(this.scene);
     this.skyDome = new SkyDome(this.scene, 780);
     this.sky.focus.copy(this.player.position);
@@ -98,22 +75,22 @@ export class Game {
       CONFIG.graphics
     );
 
-    const houseLights = this.terrainData.houses.map((h) => ({ x: h.x, y: h.y + 4, z: h.z }));
-    this.particles = new ParticleField(this.scene, CONFIG.graphics.particles, [
-      ...this.lanterns.lights,
-      ...houseLights,
-    ]);
+    const fireflyHomes = [
+      ...(this.meta.lanterns || []).map((l) => ({ x: l.x, y: l.y - 0.5, z: l.z })),
+      ...(this.meta.houseLights || []).map((l) => ({ x: l.x, y: l.y, z: l.z })),
+    ];
+    this.particles = new ParticleField(this.scene, CONFIG.graphics.particles, fireflyHomes);
     this.particles.setPixelRatio(this.renderer.getPixelRatio());
 
     this.audio = new AmbientAudio();
     this.spatial = new SpatialAudio(this.camera);
     this.footsteps = new Footsteps();
-    this.player.onStep = (surface, intensity) => {
-      this.footsteps.play(surface, intensity);
+    this.player.onStep = (blockId, intensity) => {
+      this.footsteps.play(this.footsteps.surfaceForBlock(blockId), intensity);
     };
 
-    this.sky.addLanternLights(this.pickNear(this.lanterns.lights, 8));
-    this.sky.addHouseLights(this.pickNear(houseLights, 6));
+    this.sky.addLanternLights(this.pickNear(this.meta.lanterns || [], 8));
+    this.sky.addHouseLights(this.pickNear(this.meta.houseLights || [], 6));
 
     this.clock = { last: 0 };
     this.keys = new Set();
@@ -121,7 +98,7 @@ export class Game {
 
     this.hud = new HUD();
     this.bindEvents();
-    this.hud.setSlot(this.buildTool.slot, this.buildTool.setSlot(this.buildTool.slot));
+    this.hud.setSlot(this.interaction.slot, this.interaction.setSlot(this.interaction.slot));
     this.hud.setCycleLabel('Auto');
     this.hud.setSoundLabel(false);
     this.hud.setQualityLabel(this.quality);
@@ -132,7 +109,7 @@ export class Game {
     return list
       .map((p) => ({
         ...p,
-        d: Math.hypot(p.x - this.player.position.x, p.z - this.player.position.z),
+        d: Math.hypot(p.x - this.meta.spawn.x, p.z - this.meta.spawn.z),
       }))
       .sort((a, b) => a.d - b.d)
       .slice(0, count);
@@ -145,14 +122,20 @@ export class Game {
     this.footsteps.start(this.spatial.listener.context);
 
     const riverPoints = [];
-    for (let z = Math.round(this.player.position.z); z < this.player.position.z + 150; z += 30) {
-      const zc = clamp(Math.round(z), 0, this.terrain.sizeZ - 1);
-      const x = this.terrainData.riverX(zc);
-      const y = this.terrainData.riverH[zc] - 1.4;
-      riverPoints.push({ x, y, z: zc });
+    for (let z = Math.round(this.meta.spawn.z); z < this.meta.spawn.z + 120; z += 26) {
+      const zc = clamp(Math.round(z), 0, this.world.sizeZ - 1);
+      const x = Math.round(this.meta.riverX(zc));
+      let y = null;
+      for (let yScan = this.world.height - 1; yScan > 2; yScan -= 1) {
+        if (this.world.getBlock(x, yScan, zc) === BLOCK.WATER) {
+          y = yScan;
+          break;
+        }
+      }
+      if (y !== null) riverPoints.push({ x: x + 0.5, y: y + 1, z: zc + 0.5 });
     }
     this.spatial.placeRiverEmitters(riverPoints.slice(0, 4));
-    this.spatial.placeFireEmitters(this.pickNear(this.lanterns.lights, 4));
+    this.spatial.placeFireEmitters(this.pickNear(this.meta.lanterns || [], 4));
   }
 
   bindEvents() {
@@ -173,9 +156,9 @@ export class Game {
 
       if (event.code.startsWith('Digit')) {
         const n = Number(event.code.slice(5));
-        if (n >= 1 && n <= PROP_PALETTE.length) {
-          const def = this.buildTool.setSlot(n - 1);
-          this.hud.setSlot(this.buildTool.slot, def);
+        if (n >= 1 && n <= 8) {
+          const def = this.interaction.setSlot(n - 1);
+          this.hud.setSlot(this.interaction.slot, def);
         }
       }
 
@@ -233,11 +216,14 @@ export class Game {
       this.audio.resume();
       this.startAudioWorld();
       if (event.button === 0 || event.button === 2) {
-        this.buildTool.startHold(event.button);
+        this.interaction.startHold(event.button);
       }
     });
 
-    window.addEventListener('mouseup', () => this.buildTool.endHold());
+    window.addEventListener('mouseup', () => {
+      this.interaction.endHold();
+    });
+
     canvas.addEventListener('contextmenu', (event) => event.preventDefault());
 
     document.addEventListener('mousemove', (event) => {
@@ -250,8 +236,8 @@ export class Game {
       (event) => {
         if (!this.pointerLocked) return;
         event.preventDefault();
-        const def = this.buildTool.cycleSlot(event.deltaY > 0 ? 1 : -1);
-        this.hud.setSlot(this.buildTool.slot, def);
+        const def = this.interaction.cycleSlot(event.deltaY > 0 ? 1 : -1);
+        this.hud.setSlot(this.interaction.slot, def);
       },
       { passive: false }
     );
@@ -269,7 +255,9 @@ export class Game {
       }
     });
 
-    document.addEventListener('pointerlockerror', () => this.hud.showToast('Mouse lock unavailable'));
+    document.addEventListener('pointerlockerror', () => {
+      this.hud.showToast('Mouse lock unavailable');
+    });
 
     const playBtn = document.getElementById('btn-play');
     const resumeBtn = document.getElementById('btn-resume');
@@ -319,14 +307,15 @@ export class Game {
     this.hud.hotbarSlots.addEventListener('click', (event) => {
       const slot = event.target.closest('.slot');
       if (!slot) return;
-      const def = this.buildTool.setSlot(Number(slot.dataset.index));
-      this.hud.setSlot(this.buildTool.slot, def);
+      const def = this.interaction.setSlot(Number(slot.dataset.index));
+      this.hud.setSlot(this.interaction.slot, def);
     });
   }
 
   cycleQuality() {
     const order = ['high', 'medium', 'low'];
-    this.applyQuality(order[(order.indexOf(this.quality) + 1) % order.length]);
+    const next = order[(order.indexOf(this.quality) + 1) % order.length];
+    this.applyQuality(next);
   }
 
   applyQuality(name) {
@@ -356,6 +345,7 @@ export class Game {
 
     CONFIG.render.maxPixelRatio = preset.maxPixelRatio;
     this.onResize();
+
     this.hud.setQualityLabel(name);
     this.hud.showToast(`Quality: ${name}`);
   }
@@ -376,7 +366,9 @@ export class Game {
     this.audio.start();
     this.audio.resume();
     this.startAudioWorld();
-    if (canvas.requestPointerLock) canvas.requestPointerLock();
+    if (canvas.requestPointerLock) {
+      canvas.requestPointerLock();
+    }
     this.hud.showIntro(false);
     this.hud.showPause(false);
   }
@@ -404,22 +396,57 @@ export class Game {
     const uvX = this._sunUv.x * 0.5 + 0.5;
     const uvY = this._sunUv.y * 0.5 + 0.5;
     const inFront = this._sunUv.z < 1 ? 1 : 0;
-    const onScreen =
-      uvX > -0.25 && uvX < 1.25 && uvY > -0.25 && uvY < 1.25 ? 1 : 0;
+    const onScreen = uvX > -0.25 && uvX < 1.25 && uvY > -0.25 && uvY < 1.25 ? 1 : 0;
     const facing = Math.pow(clamp(forward.dot(sunDir), 0, 1), 0.65);
-    const above = clamp(skyElevFactor(this.sky.elevation), 0, 1);
+    const above = clamp((this.sky.elevation + 0.12) / 0.35, 0, 1);
     const visibility = inFront * onScreen * facing * above;
     this.pipeline.setSun(uvX, uvY, visibility);
   }
 
+  syncAtmosphere() {
+    const water = sharedMaterials.water.uniforms;
+    const night = this.sky.nightFactor;
+    water.uTime.value = this.elapsed;
+    water.uWaveHeight.value = CONFIG.graphics.water.waveHeight;
+    water.uSunDirection.value.copy(this.sky.sunDirection);
+    water.uSunColor.value.copy(this.sky.sunColor);
+    water.uSkyColor.value.copy(this.sky.zenith);
+    water.uHorizonColor.value.copy(this.sky.horizon);
+    water.uSunIntensity.value = this.sky.sun.intensity * 0.8;
+    water.uNightFactor.value = night;
+    water.uDeepColor.value.setHex(0x174a6e).lerp(new THREE.Color(0x0a2033), night * 0.85);
+    water.uShallowColor.value.setHex(0x46a3cf).lerp(new THREE.Color(0x1c4560), night * 0.85);
+    if (water.fogColor) water.fogColor.value.copy(this.sky.fog.color);
+    if (water.fogNear !== undefined && water.fogDensity !== undefined) {
+      water.fogDensity.value = this.sky.fog.density;
+    }
+
+    voxelUniforms.uTime.value = this.elapsed;
+    voxelUniforms.uWindStrength.value =
+      CONFIG.graphics.wind.strength * (0.75 + (1 - night) * 0.5);
+
+    this.skyDome.follow(this.camera);
+    this.skyDome.sync({
+      zenith: this.sky.zenith,
+      horizon: this.sky.horizon,
+      sunColor: this.sky.sunColor,
+      sunDirection: this.sky.sunDirection,
+      nightFactor: this.sky.nightFactor,
+      elevation: this.sky.elevation,
+      time: this.elapsed,
+    });
+  }
+
   updateAudioProximity() {
-    const z = clamp(Math.round(this.player.position.z), 0, this.terrain.sizeZ - 1);
-    const riverX = this.terrainData.riverX(z);
-    const dist = Math.abs(this.player.position.x - riverX);
-    const stream = 1 - clamp((dist - 6) / 50, 0, 1);
+    const px = this.player.position.x;
+    const pz = this.player.position.z;
+    const zClamped = clamp(Math.round(pz), 0, this.world.sizeZ - 1);
+    const riverX = this.meta.riverX(zClamped);
+    const dist = Math.abs(px - riverX);
+    const stream = 1 - clamp((dist - 5) / 42, 0, 1);
     this.audio.setStreamProximity(this.player.headInWater ? 1 : stream);
     this.audio.setWindLevel(
-      0.3 + this.sky.nightFactor * 0.12 + clamp(this.player.position.y / 55, 0, 1) * 0.4
+      0.35 + this.sky.nightFactor * 0.15 + clamp(this.player.position.y / 48, 0, 1) * 0.35
     );
   }
 
@@ -432,10 +459,9 @@ export class Game {
         break;
       }
     }
-    const zc = clamp(Math.round(z), 0, this.terrain.sizeZ - 1);
-    if (Math.abs(this.player.position.x - this.terrainData.riverX(zc)) < 18) {
-      name += ' · Riverside';
-    }
+    const zClamped = clamp(Math.round(z), 0, this.world.sizeZ - 1);
+    const nearRiver = Math.abs(this.player.position.x - this.meta.riverX(zClamped)) < 16;
+    if (nearRiver) name += ' · Riverside';
     this.hud.setLocation(name);
   }
 
@@ -455,27 +481,12 @@ export class Game {
     this.elapsed += dt;
 
     this.player.update(dt);
-    this.buildTool.update(dt);
+    this.interaction.update(dt);
+    this.world.rebuildDirty();
     const skyState = this.sky.update(dt);
     this.sky.focus.copy(this.player.position);
 
-    windUniforms.uTime.value = this.elapsed;
-    windUniforms.uWindStrength.value = CONFIG.graphics.wind.strength * (0.75 + skyState.dayFactor * 0.5);
-    windUniforms.uWindGust.value = CONFIG.graphics.wind.gust;
-
-    this.river.sync(this.elapsed, this.sky);
-
-    this.skyDome.follow(this.camera);
-    this.skyDome.sync({
-      zenith: this.sky.zenith,
-      horizon: this.sky.horizon,
-      sunColor: this.sky.sunColor,
-      sunDirection: this.sky.sunDirection,
-      nightFactor: this.sky.nightFactor,
-      elevation: this.sky.elevation,
-      time: this.elapsed,
-    });
-
+    this.syncAtmosphere();
     this.updateSunFx();
     this.particles.update(dt, this.elapsed, {
       camera: this.camera,
@@ -498,8 +509,4 @@ export class Game {
 
     this.pipeline.render();
   }
-}
-
-function skyElevFactor(elev) {
-  return clamp((elev + 0.12) / 0.35, 0, 1);
 }
