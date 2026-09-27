@@ -165,7 +165,7 @@ export class ParticleField {
 
     this.motes.material.uniforms.uOpacity.value = 0.16 + dayFactor * 0.5;
     this.leaves.material.uniforms.uOpacity.value = 0.55 + dayFactor * 0.35;
-    this.fireflies.material.uniforms.uOpacity.value = Math.pow(nightFactor, 1.35) * 1.25;
+    this.fireflies.material.uniforms.uOpacity.value = Math.pow(nightFactor, 1.35) * 0.95;
     this.fireflies.visible = nightFactor > 0.02;
     void dt;
   }

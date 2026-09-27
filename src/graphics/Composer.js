@@ -7,6 +7,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { SMAAPass } from 'three/examples/jsm/postprocessing/SMAAPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { ColorGradeShader } from '../shaders/colorGrade.js';
+import { GodRaysPass } from './GodRaysPass.js';
 
 export class PostPipeline {
   constructor(renderer, scene, camera, width, height, graphics) {
@@ -27,13 +28,7 @@ export class PostPipeline {
     this.renderPass = new RenderPass(scene, camera);
     this.composer.addPass(this.renderPass);
 
-    this.ssaoPass = new SSAOPass(
-      scene,
-      camera,
-      width,
-      height,
-      graphics.ssao.kernelSize
-    );
+    this.ssaoPass = new SSAOPass(scene, camera, width, height, graphics.ssao.kernelSize);
     this.ssaoPass.kernelRadius = graphics.ssao.kernelRadius;
     this.ssaoPass.minDistance = graphics.ssao.minDistance;
     this.ssaoPass.maxDistance = graphics.ssao.maxDistance;
@@ -48,6 +43,15 @@ export class PostPipeline {
     );
     this.composer.addPass(this.bloomPass);
 
+    this.godRaysPass = new GodRaysPass();
+    this.godRaysPass.uniforms.uDensity.value = graphics.godRays.density;
+    this.godRaysPass.uniforms.uDecay.value = graphics.godRays.decay;
+    this.godRaysPass.uniforms.uWeight.value = graphics.godRays.weight;
+    this.godRaysPass.uniforms.uExposure.value = graphics.godRays.exposure;
+    this.godRaysPass.uniforms.uSamples.value = graphics.godRays.samples;
+    this.godRaysPass.enabled = graphics.godRays.enabled;
+    this.composer.addPass(this.godRaysPass);
+
     this.outputPass = new OutputPass();
     this.composer.addPass(this.outputPass);
 
@@ -61,6 +65,7 @@ export class PostPipeline {
     grade.uChroma.value = graphics.colorGrade.chromatic;
     grade.uSaturation.value = graphics.colorGrade.saturation;
     grade.uContrast.value = graphics.colorGrade.contrast;
+    grade.uWarmth.value = graphics.colorGrade.warmth;
     this.composer.addPass(this.gradePass);
   }
 
@@ -76,17 +81,17 @@ export class PostPipeline {
     this.gradePass.uniforms.uTime.value = time;
   }
 
+  setSun(uvX, uvY, visibility) {
+    this.godRaysPass.setSun(uvX, uvY, visibility);
+    this.gradePass.uniforms.uSunUv.value = [uvX, uvY];
+    this.gradePass.uniforms.uSunVis.value = visibility;
+  }
+
   setQuality(name, preset) {
     this.ssaoPass.enabled = preset.ssao.enabled && this.graphics.ssao.enabled;
     this.bloomPass.strength = preset.bloom.strength;
+    this.godRaysPass.enabled = preset.godRays.enabled && this.graphics.godRays.enabled;
     void name;
-  }
-
-  setShadowsEnabled(enabled) {
-    this.graphics.shadows.enabled = enabled;
-    for (const child of this.scene.children) {
-      if (child.isDirectionalLight) child.castShadow = enabled;
-    }
   }
 
   render() {

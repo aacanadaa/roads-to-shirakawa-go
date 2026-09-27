@@ -21,7 +21,7 @@ const SKY_KEYS = [
   {
     e: 0.135,
     zenith: 0x6092c4, horizon: 0xecd0a8, sun: 0xffd9a8,
-    fog: 0xc9b098, fogDensity: 0.005, sunI: 1.15, hemiI: 0.62, ambI: 0.55,
+    fog: 0xc9b098, fogDensity: 0.0038, sunI: 1.15, hemiI: 0.62, ambI: 0.55,
   },
   {
     e: 0.5,
@@ -192,6 +192,9 @@ export class Sky {
     mixColor(this.sunColor, lo.sun, hi.sun, t);
     mixColor(this.fog.color, lo.fog, hi.fog, t);
     this.fog.density = mixScalar(lo.fogDensity, hi.fogDensity, t);
+
+    const lowSun = clamp(1 - Math.abs(elev) / 0.38, 0, 1);
+    this.fog.color.lerp(this.sunColor, lowSun * 0.15);
 
     this.sun.color.copy(this.sunColor);
     this.sun.intensity = mixScalar(lo.sunI, hi.sunI, t);

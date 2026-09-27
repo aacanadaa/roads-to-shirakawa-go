@@ -5,6 +5,67 @@ All notable changes to **Roads to Shirakawa-Go** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-09-26
+
+Real-World Overhaul — the voxel valley becomes a high-fidelity landscape with
+shader-pack rendering in the spirit of the great Minecraft shaders.
+
+### Changed
+
+#### World model pivot
+- Replaced the blocky voxel heightmap with a smooth 103k-vertex heightfield mesh
+  (320 × 320 world, spline-carved road and river beds, flattened farmhouse pads).
+- Replaced cube-chunk meshes with merged + instanced high-fidelity models:
+  - **Trees** — cedar pines, autumn maples and birches built from tapered trunks,
+    angled branches and noise-displaced canopy clusters, with per-vertex wind flex.
+  - **Bamboo** — segmented stalks with node rings and leaf tufts.
+  - **Gassho farmhouses** — extruded catenary thatch roofs with ridge caps, timber
+    frames, corner posts, beams, porches, glowing shoji windows and door panels.
+  - **Rocks** — noise-displaced boulders with moss-tinted vertex colours.
+  - **Lanterns** — lathe-profile stone *toro* with glowing light chambers.
+  - **Bridge** — individual cedar planks with jitter, piles, posts and twin rails.
+  - **Road & river** — spline ribbons; the river carries the animated water shader.
+- New building system: place/remove six materials (stone, timber, thatch, moss,
+  sand, snow) and carve the terrain with the left-mouse dig tool.
+- Grass — up to 14 000 instanced wind-sway blades scattered on meadow slopes.
+
+#### Shader-pack rendering
+- **God rays + lens flare** — custom radial light-shaft pass with ghost/halo flare
+  in the colour grade, both driven by real-time sun screen position.
+- **Wind-sway shader** — gust-field vertex animation across trees, bamboo and grass.
+- **Splat terrain shader** — slope/altitude/noise blending of grass, dry meadow,
+  dirt, sand, rock and snow with triplanar micro-detail (no stretching).
+- **Animated water shader** — vertex waves, scrolling normals, fresnel sky
+  reflection, sun sparkle and bounded bank foam along the ribbon UVs.
+- **Sky dome shader** — gradient sky with procedural drifting clouds, sun disc,
+  atmospheric haze and twinkling night stars.
+- **Sun-tinted mist** — `FogExp2` density keyed to the solar arc, warmed toward
+  the sun at golden hour.
+- Rebalanced ACES exposure, bloom and grade for the brighter model palette.
+
+#### Audio
+- Footsteps now synthesise from terrain surface (grass / gravel / stone / snow / water).
+- Positional river emitters follow the river spline; lantern fires keep their glow.
+
+### Engine specifications
+
+| Spec | Value |
+| --- | --- |
+| Terrain | 320 × 320 smooth heightfield, 103k vertices |
+| Scenery | 745 trees, 214 boulders, 129 bamboo, 6 farmhouses, 11 lanterns, 2 bridges |
+| Post chain | Render → SSAO → Bloom → GodRays → Output(ACES) → SMAA → Grade+Flare |
+| Grass | 14 000 wind-swayed instances (quality-tiered) |
+| Runtime dependencies | `three` only |
+
+### Installation
+
+```bash
+npm install
+npm run dev      # develop on http://localhost:5173
+npm run build    # production bundle in dist/
+npm run preview  # serve the production bundle
+```
+
 ## [1.1.0] — 2026-09-25
 
 High Fidelity Graphic Overhaul — cinematic rendering, dynamic shaders and a living atmosphere.

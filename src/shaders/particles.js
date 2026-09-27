@@ -13,7 +13,7 @@ void main() {
 
   vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
   gl_Position = projectionMatrix * mvPosition;
-  float size = mix( 1.6, 4.2, fract( aSeed * 7.31 ) );
+  float size = mix( 1.2, 3.0, fract( aSeed * 7.31 ) );
   gl_PointSize = size * uPixelRatio * ( 130.0 / max( -mvPosition.z, 1.0 ) );
   float dist = length( mvPosition.xyz );
   vAlpha = smoothstep( uVolume * 0.55, uVolume * 0.18, dist ) * ( 0.35 + fract( aSeed * 3.77 ) * 0.5 );
@@ -48,7 +48,7 @@ void main() {
 
   vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
   gl_Position = projectionMatrix * mvPosition;
-  float size = mix( 3.2, 6.5, fract( aSeed * 5.13 ) );
+  float size = mix( 2.3, 4.6, fract( aSeed * 5.13 ) );
   gl_PointSize = size * uPixelRatio * ( 130.0 / max( -mvPosition.z, 1.0 ) );
   float pulse = 0.45 + 0.55 * pow( 0.5 + 0.5 * sin( t * ( 1.6 + fract( aSeed * 9.7 ) * 1.8 ) + aSeed * 40.0 ), 2.0 );
   float dist = length( mvPosition.xyz );
@@ -87,7 +87,7 @@ void main() {
 
   vec4 mvPosition = modelViewMatrix * vec4( pos, 1.0 );
   gl_Position = projectionMatrix * mvPosition;
-  float size = mix( 3.4, 7.5, fract( aSeed * 4.9 ) );
+  float size = mix( 2.1, 4.2, fract( aSeed * 4.9 ) );
   gl_PointSize = size * uPixelRatio * ( 130.0 / max( -mvPosition.z, 1.0 ) );
   float dist = length( mvPosition.xyz );
   vAlpha = smoothstep( uVolume * 0.62, uVolume * 0.2, dist ) * 0.85;

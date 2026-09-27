@@ -23,6 +23,28 @@ float skyHash21( vec2 p ) {
   return fract( p.x * p.y );
 }
 
+float skyNoise( vec2 p ) {
+  vec2 i = floor( p );
+  vec2 f = fract( p );
+  vec2 u = f * f * ( 3.0 - 2.0 * f );
+  return mix(
+    mix( skyHash21( i ), skyHash21( i + vec2( 1.0, 0.0 ) ), u.x ),
+    mix( skyHash21( i + vec2( 0.0, 1.0 ) ), skyHash21( i + vec2( 1.0, 1.0 ) ), u.x ),
+    u.y
+  );
+}
+
+float skyFbm( vec2 p ) {
+  float s = 0.0;
+  float a = 0.5;
+  for ( int i = 0; i < 4; i ++ ) {
+    s += a * skyNoise( p );
+    p *= 2.11;
+    a *= 0.5;
+  }
+  return s;
+}
+
 void main() {
   vec3 dir = normalize( vSkyDir );
   float horizonBlend = pow( clamp( dir.y * 0.5 + 0.5, 0.0, 1.0 ), 0.55 );
@@ -33,7 +55,19 @@ void main() {
   float glow = pow( sunDot, 12.0 );
   float haze = pow( sunDot, 3.0 );
 
-  sky += uSunColor * ( disc * 4.2 + glow * 0.55 + haze * 0.16 );
+  if ( dir.y > 0.015 ) {
+    vec2 cuv = dir.xz / max( dir.y, 0.06 ) * 0.32;
+    cuv += vec2( uTime * 0.0045, uTime * 0.0022 );
+    float cover = skyFbm( cuv * 1.35 ) * 0.75 + skyFbm( cuv * 3.4 ) * 0.25;
+    float clouds = smoothstep( 0.48, 0.78, cover ) * smoothstep( 0.0, 0.16, dir.y );
+    vec3 cloudLit = mix( uHorizon * 1.05, uSunColor * 1.12, haze * 0.85 + 0.18 );
+    vec3 cloudShadow = mix( uZenith, uHorizon, 0.45 ) * 0.82;
+    vec3 cloudCol = mix( cloudShadow, cloudLit, smoothstep( 0.4, 0.95, cover ) );
+    cloudCol = mix( cloudCol, cloudCol * 0.28, uNightFactor * 0.85 );
+    sky = mix( sky, cloudCol, clouds * 0.92 );
+  }
+
+  sky += uSunColor * ( disc * 1.9 + glow * 0.28 + haze * 0.1 );
   sky = mix( sky, uSunColor * 0.85, haze * 0.14 * clamp( 1.0 - uSunElevation, 0.0, 1.0 ) );
 
   if ( uNightFactor > 0.004 ) {

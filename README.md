@@ -6,12 +6,11 @@
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![WebGL](https://img.shields.io/badge/WebGL-2-990000?logo=webgl&logoColor=white)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
-![Release](https://img.shields.io/badge/release-v1.0.0-orange)
+![Release](https://img.shields.io/badge/release-v1.2.0-orange)
 
-> A 3D voxel journey along the scenic mountain road from **Takayama to Shirakawa-go** —
-> procedural rural Japan rendered in your browser. Steer past gassho-zukuri farmhouses,
-> autumn maple groves and stone lanterns, cross the mountain stream, and reshape the
-> valley one block at a time.
+> A high-fidelity 3D journey along the scenic mountain road from **Takayama to Shirakawa-go** —
+> smooth mountain terrain, handcrafted gassho-zukuri farmhouses, wind-swept forests and a
+> shader-driven atmosphere in the spirit of the great Minecraft shader packs.
 
 ![Valley view along the road to Shirakawa-go](./docs/screenshot-valley.jpg)
 
@@ -19,53 +18,31 @@
 
 ## Highlights
 
-- **Fully editable voxel world** — break and place blocks in real time (left / right click)
-  with an 8-slot palette: rice grass, cedar wood, thatched roof, mountain stone, pine
-  foliage, autumn maple, road asphalt and mountain water.
-- **Cinematic renderer** — SSAO, ACES tone mapping, UnrealBloom, SMAA and a custom
-  film-grade pass over a shader sky, animated water and volumetric mountain mist.
-- **Procedural Takayama valley** — a meandering mountain road, a flowing stream with
-  cascades, a wooden bridge, snow-capped ridgelines and a 256 × 256 × 64 voxel map.
-- **Gassho-zukuri architecture** — steep thatched-roof farmhouses generated block by
-  block along the road, complete with cedar walls, doors and stone foundations.
-- **Living day / night cycle** — a smooth four-minute solar arc drives sun direction,
-  sky and fog colour, ambient light and warm lantern glow (`N` to toggle Auto / Day / Night).
-- **Procedural ambience** — Web Audio API wind, mountain stream and distant falls,
-  with stream loudness that follows you as you walk the riverbank (`M` to mute).
-- **Zero gameplay dependencies** — hand-rolled noise, physics, raycasting and audio.
-  The only runtime dependency is [three.js](https://threejs.org/).
+- **Real-world scenery, not blocks** — a smooth 100k-vertex heightfield valley with
+  grass/rock/snow splat shading, extruded gassho farmhouses with curved thatch roofs,
+  700+ merged-geometry trees (cedar pine, autumn maple, birch), bamboo groves,
+  mossy boulders, plank bridges and roadside stone lanterns (*toro*).
+- **Shader-pack atmosphere** — volumetric god rays and lens flare from the sun, UnrealBloom
+  on lanterns and water glints, ACES tone mapping, SMAA, SSAO contact shadows, filmic
+  colour grade and drifting mountain mist.
+- **Wind and water** — foliage and grass sway in a gusting wind field; the river is a
+  fully animated shader ribbon with waves, fresnel sky reflection, sun sparkle and
+  foam where it meets the banks.
+- **Living day / night cycle** — a four-minute solar arc drives sun direction, cloud-lit
+  sky dome, fog colour and lantern glow, from golden sunset to misty blue twilight
+  (`N` toggles Auto / Day / Night).
+- **Explore and build** — walk, sprint, jump and swim the valley; carve the terrain and
+  place stone, timber, thatch, moss, sand and snow with the build palette.
+- **Procedural audio** — wind and mountain-stream beds, positional river and crackling
+  lantern fires, plus surface-aware footsteps on grass, gravel, stone and snow.
 
-| Gassho farmhouse | River crossing | Nightfall |
+| Gassho farmhouse | River crossing | Golden hour |
 | --- | --- | --- |
-| ![Gassho-zukuri house](./docs/screenshot-gassho.jpg) | ![Wooden bridge over the stream](./docs/screenshot-bridge.jpg) | ![Night over the valley](./docs/screenshot-night.jpg) |
+| ![Gassho-zukuri house](./docs/screenshot-gassho.jpg) | ![Wooden bridge over the stream](./docs/screenshot-bridge.jpg) | ![Golden hour over the valley](./docs/screenshot-golden.jpg) |
 
-![Golden hour over the Takayama valley](./docs/screenshot-golden.jpg)
-
----
-
-## Rendering & Atmosphere
-
-v1.1 ships a full cinematic post-processing stack built on `three/examples/jsm`:
-
-| Stage | Pass | Purpose |
-| --- | --- | --- |
-| 1 | `RenderPass` | Linear HDR scene render (half-float targets) |
-| 2 | `SSAOPass` | Screen-space ambient occlusion in voxel crevices |
-| 3 | `UnrealBloomPass` | Glow on lanterns, shōji screens, sun and water glints |
-| 4 | `OutputPass` | ACES filmic tone mapping + sRGB encode |
-| 5 | `SMAAPass` | Subpixel anti-aliasing on block silhouettes |
-| 6 | `ColorGradePass` | Vignette, film grain, chromatic aberration, contrast |
-
-- **Triplanar world shading** — procedural wood grain, thatch striations, stone speckle and
-  bamboo segmentation blended by world normal, so nothing stretches on voxel sides.
-- **Animated water** — vertex-displaced ripples, scrolling normals, fresnel sky reflection,
-  sun sparkle and foam where the stream meets banks and bridge posts.
-- **Shader sky dome** — gradient sky with sun disc, atmospheric glow and night stars,
-  synced to a six-stage elevation-keyed time-of-day palette.
-- **Volumetric mountain mist** — `FogExp2` density breathes with the solar arc.
-- **Particles** — pollen motes in sunbeams, *hotaru* fireflies around lanterns at night,
-  and drifting autumn leaves.
-- **2048² directional shadows** with bias tuning and a player-following shadow camera.
+| Nightfall | On the trail |
+| --- | --- |
+| ![Night over the valley](./docs/screenshot-night.jpg) | ![First-person on the road](./docs/screenshot-ground.jpg) |
 
 ---
 
@@ -99,9 +76,9 @@ Click the canvas to capture the mouse and start exploring.
 | Mouse | Look around |
 | `Space` | Jump / swim up |
 | `Shift` | Sprint |
-| Left click | Break block |
-| Right click | Place block |
-| `1`–`8` / Mouse wheel | Select block from the palette |
+| Left click | Dig terrain / remove placed block |
+| Right click | Place selected block |
+| `1`–`6` / Mouse wheel | Select building material |
 | `N` | Cycle day / night mode (Auto → Day → Night) |
 | `M` | Mute / unmute ambient audio |
 | `G` | Cycle graphics quality (High → Medium → Low) |
@@ -110,79 +87,75 @@ Click the canvas to capture the mouse and start exploring.
 
 ---
 
+## Rendering & Atmosphere
+
+A cinematic `EffectComposer` pipeline over the whole scene:
+
+| Stage | Pass | Purpose |
+| --- | --- | --- |
+| 1 | `RenderPass` | Linear HDR render (half-float targets) |
+| 2 | `SSAOPass` | Screen-space ambient occlusion in crevices |
+| 3 | `UnrealBloomPass` | Glow on lanterns, windows, sun and water |
+| 4 | `GodRaysPass` | Radial light shafts from the sun, with lens-flare ghosts in the grade |
+| 5 | `OutputPass` | ACES filmic tone mapping + sRGB encode |
+| 6 | `SMAAPass` | Subpixel anti-aliasing on silhouettes |
+| 7 | `ColorGradePass` | Vignette, grain, chromatic aberration, warmth, flare ghosts |
+
+- **Splat terrain shading** — grass, dry meadow, dirt, sand, rock and snow blended by
+  slope, altitude and multi-octave noise, with triplanar micro-detail so nothing stretches.
+- **Wind-sway shader** — every tree, bamboo stalk and grass blade bends with a shared
+  gust field (flex-weighted vertex motion).
+- **Animated water shader** — vertex waves, scrolling procedural normals, fresnel sky
+  reflection, sun glints and bank foam along the river ribbon.
+- **Sky dome shader** — gradient sky, procedural drifting clouds, sun disc and twinkling
+  stars, synced to the elevation-keyed time-of-day palette.
+
+---
+
 ## Technology & Architecture
 
 | Layer | Choice | Notes |
 | --- | --- | --- |
-| Engine | **three.js** (r186) | WebGL2 renderer, `InstancedMesh` voxel batches |
-| Post-processing | **EffectComposer** | SSAO + UnrealBloom + ACES + SMAA + custom grade |
-| Bundler | **Vite** | ES modules, instant HMR, `vite build` production bundle |
-| Language | **JavaScript (ES2022)** | Zero build-time transpilation beyond Vite |
-| Styling | **CSS3** | Frosted-glass HUD overlay, no CSS framework |
-| Audio | **Web Audio API** | Procedural noise beds + `PositionalAudio` world emitters |
-| Physics | **Custom AABB** | Axis-separated voxel collision with auto step-up |
+| Engine | **three.js** (r186) | WebGL2 renderer, merged + instanced geometry |
+| Post-processing | **EffectComposer** | SSAO + Bloom + GodRays + ACES + SMAA + grade |
+| Bundler | **Vite** | ES modules, instant HMR, `vite build` |
+| Language | **JavaScript (ES2022)** | No transpile step beyond Vite |
+| Styling | **CSS3** | Frosted-glass HUD |
+| Audio | **Web Audio API** | Procedural beds + `PositionalAudio` emitters |
+| Physics | **Custom heightfield** | Slope walking, swimming, prop collision |
 
 ```text
 roads-to-shirakawa-go/
-├── index.html              # canvas host + HUD markup
-├── vite.config.js          # bundler configuration
+├── index.html                  # canvas host + HUD markup
 └── src/
-    ├── main.js             # entry point
-    ├── config.js           # tunable gameplay + graphics constants
-    ├── utils.js            # math helpers (clamp, smoothstep, hash)
-    ├── core/
-    │   └── Game.js         # renderer, input, quality tiers, main loop
-    ├── graphics/
-    │   ├── Composer.js     # EffectComposer post-processing chain
-    │   ├── SkyDome.js      # gradient sky shader mesh
-    │   ├── VoxelMaterial.js# triplanar-injected Lambert blocks
-    │   ├── WaterMaterial.js# animated water ShaderMaterial
-    │   └── Particles.js    # motes, fireflies, falling leaves
-    ├── shaders/
-    │   ├── triplanar.js    # world-space procedural detail GLSL
-    │   ├── water.js        # ripple / foam / fresnel GLSL
-    │   ├── skyDome.js      # sky gradient + stars GLSL
-    │   ├── particles.js    # point-sprite motion GLSL
-    │   └── colorGrade.js   # vignette / grain / aberration GLSL
+    ├── main.js                 # entry point
+    ├── config.js               # gameplay + graphics constants
+    ├── core/Game.js            # orchestration, input, quality tiers
     ├── world/
-    │   ├── blocks.js       # block registry + palette
-    │   ├── noise.js        # seeded Perlin / fBm / ridged noise
-    │   ├── Chunk.js        # InstancedMesh batching per chunk
-    │   ├── World.js        # voxel storage + DDA raycasting
-    │   └── Generator.js    # terrain, road, river, houses, trees
+    │   ├── terrainGen.js       # heightfield, road/river splines, scenery scatter
+    │   ├── Terrain.js          # terrain mesh, splat shader, height sampling, deform
+    │   └── noise.js            # seeded Perlin / fBm / ridged noise
+    ├── scenery/
+    │   ├── Trees.js            # merged tree models + wind instancing
+    │   ├── Houses.js           # gassho farmhouses (extruded thatch roofs)
+    │   ├── Grass.js            # instanced wind-sway grass blades
+    │   ├── Rocks.js · Bamboo (Trees) · Lanterns.js · Bridge.js
+    │   ├── Road.js · Water.js  # ribbon meshes + animated water shader
+    │   └── Props.js            # placeable building blocks
+    ├── graphics/
+    │   ├── Composer.js         # post-processing chain
+    │   ├── GodRaysPass.js      # radial light shafts
+    │   ├── SkyDome.js          # gradient sky + clouds + stars
+    │   ├── SurfaceMaterial.js  # triplanar detail materials
+    │   └── Particles.js        # motes, fireflies, falling leaves
+    ├── shaders/                # GLSL: terrain, water, wind, surface, sky, grade, rays
     ├── player/
-    │   ├── Player.js       # first-person controller + physics
-    │   └── BlockInteraction.js  # targeting, break / place
-    ├── env/
-    │   └── Sky.js          # sun arc, fog, palette, lantern lights
-    ├── audio/
-    │   ├── AmbientAudio.js # procedural wind / stream / falls
-    │   ├── SpatialAudio.js # positional river + lantern fire
-    │   └── Footsteps.js    # surface-aware step synthesis
-    └── ui/
-        ├── HUD.js          # hotbar, stats, banner, quality
-        └── hud.css         # frosted-glass overlay styling
+    │   ├── Player.js           # heightfield controller + physics
+    │   └── BuildTool.js        # raycast dig / place tool
+    ├── env/Sky.js              # sun arc, fog, palette, lantern lights
+    ├── audio/                  # ambient beds, positional emitters, footsteps
+    └── ui/                     # frosted-glass HUD
 ```
-
-### Voxel pipeline
-
-The world is a flat `Uint8Array` (256 × 256 × 64) divided into 16 × 16 chunks.
-Each chunk builds one opaque and one transparent `InstancedMesh` containing only
-**exposed** blocks (any face adjacent to air or water), tinted per instance with a
-subtle hash jitter and a cheap vertical occlusion shade. Edits mark neighbouring
-chunks dirty; only dirty chunks re-mesh. Block targeting uses an Amanatides & Woo
-DDA voxel traversal for exact face normals — no mesh raycasting required.
-
-### World generation
-
-1. fBm + ridged Perlin noise builds the valley floor and the Takayama ridgeline
-   (edge-weighted so the horizon is ringed by snow-capped mountains).
-2. The road is carved as a smoothed height profile along a meandering spline, with
-   asphalt surface and gravel shoulders.
-3. The stream is carved as a separate meander, filled with translucent water blocks;
-   where it meets the road a cedar bridge with railings and pillars is generated.
-4. Gassho farmhouses, pine / maple groves and roadside stone lanterns (*toro*) are
-   stamped from seeded randomness away from road and river.
 
 ---
 
@@ -190,9 +163,6 @@ DDA voxel traversal for exact face normals — no mesh raycasting required.
 
 Contributions are welcome — please read [CONTRIBUTING.md](./CONTRIBUTING.md) for
 the development workflow, code style and pull-request guidelines.
-
-Ideas we would love help with: greedy meshing, chunk streaming, touch controls,
-save / load of edited regions, seasonal palettes, and accessibility options.
 
 ---
 
@@ -202,7 +172,7 @@ This project is licensed under the **GNU General Public License v3.0** — see
 [LICENSE](./LICENSE) for the full text.
 
 ```
-Roads to Shirakawa-Go — a 3D voxel journey through rural Japan
+Roads to Shirakawa-Go — a 3D journey through rural Japan
 Copyright (C) 2026 aacanadaa
 
 This program is free software: you can redistribute it and/or modify
