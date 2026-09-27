@@ -5,6 +5,34 @@ All notable changes to **Roads to Shirakawa-Go** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-09-27
+
+Mini-Cube Detail Scale — structures rebuilt from dense 0.25 m cubes.
+
+### Added
+- New micro-voxel decorator (`src/world/micro.js`): a sparse mini-cube grid
+  meshed with face culling into the same shader-pack materials (triplanar
+  detail, wind sway, face shading) — the whole decor layer costs 2 draw calls.
+- Gassho farmhouses remodelled: stone foundation skirt, timber corner posts /
+  beams / studs, shoji lattice windows, grand entry with lintel, stone step and
+  hanging lantern, steep 45° stepped thatch roof with plank eave liner, gable
+  triangles, ridge cap, plus a firewood stack (block roofs replaced by a timber
+  attic ceiling; the visible roof is now mini-cubes).
+- Stone *toro* lanterns rebuilt as multi-tier mini-cube models: platform,
+  pedestal, firebox shell with glowing window openings and light core, stepped
+  pyramid roof, jewel tip (block lantern cores removed).
+- Bridges dressed with rail posts, double rails, glowing post lanterns and
+  support pile clusters (block railings removed in favour of micro rails).
+- Roadside props: ground-following paddock fences, crates, banded barrels and
+  a trail signpost at spawn.
+- Trees dressed with branch limbs from upper trunks and dithered leaf fringe on
+  canopy surfaces (~14k mini leaves) so canopies read as dense clusters.
+
+### Fixed
+- Glow-material lantern flicker referenced `vViewPosition`, which does not
+  exist in `MeshBasicMaterial` and would break glow shader compilation;
+  flicker now uses a dedicated world-position varying.
+
 ## [1.3.0] — 2026-09-27
 
 Voxel Revival + Shader-Pack Detail — back to blocks, more beautiful than ever.

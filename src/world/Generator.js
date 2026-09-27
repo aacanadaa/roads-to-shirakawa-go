@@ -203,13 +203,9 @@ export function generateWorld(world) {
           world.data[world.index(x, y, z)] = BLOCK.AIR;
         }
 
-        const edge = Math.abs(x - riverX(z)) > 5.2;
-        if (edge && Math.abs(dz) <= halfSpan) {
-          for (let y = deckY + 1; y <= deckY + 2; y += 1) {
-            if (dz % 2 === 0 || y === deckY + 2) {
-              world.data[world.index(x, y, z)] = BLOCK.WOOD;
-            }
-          }
+        // Clear the air above the deck: micro rails + posts own this space.
+        for (let y = deckY + 1; y <= deckY + 3 && y < height; y += 1) {
+          world.data[world.index(x, y, z)] = BLOCK.AIR;
         }
       }
     }
@@ -479,30 +475,21 @@ export function generateWorld(world) {
     const rx1 = x1 + 1;
     const rz0 = z0 - 1;
     const rz1 = z1 + 1;
-    const roofLayers = Math.floor((rx1 - rx0 + 1) / 2) + 1;
-    for (let ly = 0; ly < roofLayers; ly += 1) {
-      const a = rx0 + ly;
-      const b = rx1 - ly;
-      if (a > b) break;
-      const y = wallTop + 1 + ly;
-      if (y >= height) break;
-      for (let z = rz0; z <= rz1; z += 1) {
-        for (let x = a; x <= b; x += 1) {
-          if (x < 0 || x >= sizeX || z < 0 || z >= sizeZ) continue;
-          world.data[world.index(x, y, z)] = BLOCK.THATCH;
-        }
-      }
-    }
 
+    // Flat timber ceiling at wall-top level: seals the interior for collision
+    // and gives the attic floor. The visible steep thatch roof is built from
+    // 0.25 m mini-cubes by the micro decorator (see world/micro.js).
     for (let z = rz0; z <= rz1; z += 1) {
       for (let x = rx0; x <= rx1; x += 1) {
         if (x < 0 || x >= sizeX || z < 0 || z >= sizeZ) continue;
         const y = wallTop;
         if (world.data[world.index(x, y, z)] === BLOCK.AIR) {
-          world.data[world.index(x, y, z)] = BLOCK.THATCH;
+          world.data[world.index(x, y, z)] = BLOCK.WOOD;
         }
       }
     }
+    // Store the eave rect so the micro decorator can raise the stepped roof.
+    house.eave = { rx0, rx1, rz0, rz1, wallTop };
   }
 
   // ---- 8b. cobblestone paths from farmhouses to the road ---------------
@@ -589,9 +576,11 @@ export function generateWorld(world) {
     const h = surfaceY[lz * sizeX + clamp(lx, 0, sizeX - 1)];
     if (h <= 1 || h >= 40) continue;
 
-    world.data[world.index(lx, h + 1, lz)] = BLOCK.STONE;
-    world.data[world.index(lx, h + 2, lz)] = BLOCK.LANTERN;
-    if (h + 3 < height) world.data[world.index(lx, h + 3, lz)] = BLOCK.THATCH;
+    // The visible multi-tier toro is built from 0.25 m mini-cubes by the
+    // micro decorator; keep only air here so nothing pokes through it.
+    for (let y = h + 1; y <= h + 5 && y < height; y += 1) {
+      world.data[world.index(lx, y, lz)] = BLOCK.AIR;
+    }
     lanterns.push({ x: lx, y: h + 3, z: lz });
   }
 

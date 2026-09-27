@@ -63,17 +63,22 @@ export function createGlowMaterial() {
   });
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uTime = voxelUniforms.uTime;
-    shader.vertexShader = shader.vertexShader.replace(
-      '#include <common>',
-      '#include <common>\nuniform float uTime;'
-    );
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nuniform float uTime;\nvarying vec3 vGlowWPos;')
+      .replace(
+        '#include <project_vertex>',
+        '#include <project_vertex>\nvGlowWPos = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;'
+      );
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform float uTime;')
+      .replace(
+        '#include <common>',
+        '#include <common>\nuniform float uTime;\nvarying vec3 vGlowWPos;'
+      )
       .replace(
         '#include <dithering_fragment>',
         `
         // Gentle lantern flicker so night villages feel alive.
-        float flick = 0.94 + 0.06 * sin( uTime * 7.0 + vViewPosition.x * 2.0 + vViewPosition.y * 3.0 );
+        float flick = 0.94 + 0.06 * sin( uTime * 7.0 + vGlowWPos.x * 2.0 + vGlowWPos.y * 3.0 + vGlowWPos.z * 1.7 );
         gl_FragColor.rgb *= flick;
         #include <dithering_fragment>`
       );

@@ -3,6 +3,7 @@ import { CONFIG, QUALITY_PRESETS } from '../config.js';
 import { World } from '../world/World.js';
 import { generateWorld } from '../world/Generator.js';
 import { sharedMaterials, Chunk } from '../world/Chunk.js';
+import { decorateMicroWorld } from '../world/micro.js';
 import { BLOCK } from '../world/blocks.js';
 import { voxelUniforms } from '../graphics/VoxelMaterial.js';
 import { Player } from '../player/Player.js';
@@ -57,6 +58,8 @@ export class Game {
     this.meta = generateWorld(this.world);
     this.world.meta = this.meta;
     this.world.buildAll();
+    // High-fidelity mini-cube structures (static decor overlay, 2 draw calls).
+    this.microStats = decorateMicroWorld(this.world, this.meta, this.scene);
 
     this.player = new Player(this.camera, this.world);
     this.player.spawn(this.meta.spawn.x, this.meta.spawn.y, this.meta.spawn.z, Math.PI * 0.92);

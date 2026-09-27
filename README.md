@@ -6,7 +6,7 @@
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![WebGL](https://img.shields.io/badge/WebGL-2-990000?logo=webgl&logoColor=white)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
-![Release](https://img.shields.io/badge/release-v1.3.0-orange)
+![Release](https://img.shields.io/badge/release-v1.4.0-orange)
 
 > A high-fidelity **voxel** journey along the scenic mountain road from **Takayama to Shirakawa-go** —
 > hand-built blocky gassho-zukuri farmhouses, wind-swept voxel forests and a
@@ -21,8 +21,14 @@
 - **True voxel world, highly detailed** — a 288 × 288 × 80 block valley rendered with
   merged-face chunk meshes, per-vertex ambient occlusion, directional face shading and
   triplanar micro-texture per block: terraced rice paddies, flower-drift meadows, grass
-  tufts, reeds and lily pads, moss carpets, bamboo groves, birch/maple/pine forests,
-  gassho farmhouses with glowing shoji, plank bridges, cobble paths and stone lanterns.
+  tufts, reeds and lily pads, moss carpets, bamboo groves and birch/maple/pine forests.
+- **Mini-cube architecture (0.25 m detail scale)** — farmhouses, lanterns, bridges and
+  props are fully modelled from dense small cubes in just two extra draw calls:
+  gassho farmhouses with timber framing, shoji lattice windows, grand entries with
+  hanging lanterns, steep stepped thatch roofs with gables and ridge caps, wood piles;
+  multi-tier stone *toro* with glowing firebox windows; railed plank bridges on piles;
+  paddock fences, crates, barrels and a trail signpost; trees carry branch limbs and
+  dithered leaf fringe so canopies read as dense clusters.
 - **Shader-pack atmosphere (SEUS/BSL spirit, voxel-native)** — volumetric god rays and
   lens flare from the sun, UnrealBloom on lanterns and water glints, ACES tone mapping,
   SMAA, SSAO plus baked voxel AO, filmic colour grade and drifting mountain mist.
